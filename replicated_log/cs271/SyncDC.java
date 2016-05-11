@@ -12,6 +12,13 @@ import cs271.DataCenter;
 import cs271.Message;
 import cs271.TransData;
 
+/**
+ * This class is used to send sync request from one server to another, with a pre-established socket (by class Worker)
+ * and DataCenter objects(every datacenter is the same one), it receives SyncDC and updates log, blog, and timetable.
+ *
+ * @author Yiting Mao
+ * @since 2016-04-25
+ */
 public class SyncDC implements Runnable {
   Socket socket;
   DataCenter dc;
@@ -29,11 +36,13 @@ public class SyncDC implements Runnable {
       int remote_id = record.getId();
       int time = record.getTime();
       int local_id = dc.getId();
+      /* update log and blog if it hasn't been recorded by time table */
       if (dc.table[local_id][remote_id] < time) {
         dc.addLog(record);
         dc.addBlog(new Message(record.user, 'p', record.post));
       }
     }
+    /* update each entry of the time table */
     for (int i = 0; i < dc.DCNUM; ++i) {
       for (int j = 0; j < dc.DCNUM; ++j) {
         if(dc.table[i][j] < td.table[i][j]) {
@@ -41,6 +50,7 @@ public class SyncDC implements Runnable {
         }
       }
     }
+    /* update info from the sender */
     for (int i = 0; i < dc.DCNUM; ++i) {
       if(dc.table[dc.getId()][i] < td.table[td.getId()][i]) {
         dc.table[dc.getId()][i] = td.table[td.getId()][i];
@@ -52,6 +62,7 @@ public class SyncDC implements Runnable {
     try {
       outStream =  new ObjectOutputStream(socket.getOutputStream());
       inStream = new ObjectInputStream(socket.getInputStream());
+      /* sends request to another server */
       Message message = new Message(null, 'r', Integer.toString(dc.getId()));
       outStream.writeObject(message);
       TransData td = (TransData) inStream.readObject();

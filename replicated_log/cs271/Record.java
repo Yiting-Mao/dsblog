@@ -1,10 +1,19 @@
 package cs271;
 import java.io.Serializable;
 
+/**
+ * The structure of each entry in the log
+ *
+ * @author Yiting Mao
+ * @since 2016-04-20
+ */
 public class Record implements Serializable {
+  /* local time of server when the event takes place */
   int time;
+  /* id of server at which the event takes place */
   int id;
-  String user;
+  String user;  
+  /* The content of the post */
   String post;
   public Record() {
     

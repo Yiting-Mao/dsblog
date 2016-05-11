@@ -7,6 +7,12 @@ import java.util.Iterator;
 import cs271.Message;
 import cs271.Record;
 
+/** 
+ * This structure is used to transmit data between servers.
+ * When receiving sych request from other server, it sends its log, time table and server id.
+ * @author Yiting Mao
+ * @since 2016-04-23
+ */
 class TransData implements Serializable {
   List<Record> log;
   int[][] table;

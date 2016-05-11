@@ -12,6 +12,13 @@ import cs271.Record;
 import cs271.Message;
 import cs271.Worker;
 
+/** 
+ * DataCenter keeps track of a log, which is a list of Records, a blog, which is a list of Messages, and a time table.
+ * It also increases its local time whenever a new blog is posted.
+ *
+ * @author Yiting Mao
+ * @since 2016-04-20
+ */
 public class DataCenter {
   static final String[] IPS = {"128.111.84.227", "128.111.84.250", "128.111.84.254"};
   static final int PORT = 6666;
@@ -70,6 +77,11 @@ public class DataCenter {
   public void addBlog(Message m) {
     blog.add(m);
   }
+  /**
+   * Creates a new DataCenter object when the program starts, the data center id can be specified.
+   * Opens a ServerSocket and accepts socket connections through a while loop.
+   * When a new socket connection is established, open a new Worker thread to due with the requests.
+   */
   public static void main(String[] args) {
     BufferedReader bin = new BufferedReader(new InputStreamReader(System.in));
     int id = -1;
@@ -92,7 +104,6 @@ public class DataCenter {
       ServerSocket ss = new ServerSocket(PORT);
       System.out.println("System start:" + ss);
       while(true) {
-        //if (bin.readLine() != null) break;
         Socket incoming = ss.accept();
         System.out.println("System connecting and accepted:" + incoming);
         Worker worker = new Worker(incoming, dc);

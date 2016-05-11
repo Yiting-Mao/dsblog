@@ -13,6 +13,13 @@ import cs271.DataCenter;
 import cs271.Message;
 import cs271.SyncDC;
 
+/**
+ * This class dues with client request and other server's sync request. 
+ * It is established by the main function of DataCenter.
+ *
+ * @author Yiting Mao
+ * @since 2016-04-20
+ */
 public class Worker implements Runnable {
   Socket socket;
   DataCenter dc;
@@ -23,7 +30,7 @@ public class Worker implements Runnable {
     this.dc = dc;
   }
   
-  //update log, blog, time, and timetable based on message from client
+  /* update log, blog, time, and timetable based on message from client */
   private synchronized void addBlog(Message m) {
     dc.addBlog(m);
     int time = dc.getTime();
@@ -33,7 +40,7 @@ public class Worker implements Runnable {
     dc.setTime(time + 1);
     dc.addLocalEntry();
   }
-  
+  /* establish a new socket and thread to receive sync data from other servers */
   private void getData(Message message) {
     int num = Integer.parseInt(message.message);
     if (num == dc.id) return;
@@ -53,6 +60,7 @@ public class Worker implements Runnable {
     } 
   }
   
+  /* send log and time table to other servers */
   private void sendData(Message message) {
     int num = Integer.parseInt(message.message);
     List<Record> log = new ArrayList<Record>();

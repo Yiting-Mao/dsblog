@@ -8,15 +8,23 @@ import java.util.ArrayList;
 
 import cs271.Message;
 
+/**
+ * Client API to interact with users, users can input their names,
+ * choose the server id he/she wants to talk with,
+ * supported operations are post, look up, sync, and quit
+ *
+ * @author Yiting Mao
+ * @since 2016-04-20
+ */
 public class Client {
   static final String[] IPS = {"128.111.84.227", "128.111.84.250", "128.111.84.254"};
   static final int PORT = 6666;
 
   public static void main(String args[]) {
     
-    try {     
-      
+    try {           
       System.out.println("Input your name...");
+      /* get inputs from user */
       BufferedReader bin = new BufferedReader(new InputStreamReader(System.in));
       String name = bin.readLine();   
       System.out.println("Choose your server number(0 to 2)...");

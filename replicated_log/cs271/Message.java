@@ -1,6 +1,13 @@
 package cs271;
 import java.io.Serializable;
 
+/**
+ * Defines the message structure sent from clients to servers. 
+ * It is also used to start sync data between servers.
+ * 
+ * @author Yiting Mao
+ * @since 2016-04-20
+ */
 class Message implements Serializable {
   String user;
   char op;
