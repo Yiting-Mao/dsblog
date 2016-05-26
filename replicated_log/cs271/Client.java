@@ -17,7 +17,7 @@ import cs271.Message;
  * @since 2016-04-20
  */
 public class Client {
-  static final String[] IPS = {"128.111.84.227", "128.111.84.250", "128.111.84.254"};
+  static final String[] IPS = {"localhost", "128.111.84.250", "128.111.84.254"};
   static final int PORT = 6666;
 
   public static void main(String args[]) {

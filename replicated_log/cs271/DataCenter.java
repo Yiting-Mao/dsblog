@@ -20,7 +20,7 @@ import cs271.Worker;
  * @since 2016-04-20
  */
 public class DataCenter {
-  static final String[] IPS = {"128.111.84.227", "128.111.84.250", "128.111.84.254"};
+  static final String[] IPS = {"localhost", "128.111.84.250", "128.111.84.254"};
   static final int PORT = 6666;
   static final int DCNUM = 3;
   int id;
@@ -106,6 +106,7 @@ public class DataCenter {
       while(true) {
         Socket incoming = ss.accept();
         System.out.println("System connecting and accepted:" + incoming);
+        /* creates a new thread to due with this connection, continues accepting other socket */
         Worker worker = new Worker(incoming, dc);
         Thread t = new Thread(worker);
         t.start();

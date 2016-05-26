@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.ArrayList;
@@ -27,6 +28,11 @@ public class Worker implements Runnable {
   ObjectOutputStream outStream = null;
   public Worker(Socket socket, DataCenter dc) {
     this.socket = socket;
+    try {
+      this.socket.setSoTimeout (9000);
+    } catch (SocketException se) {
+      System.err.println ("Unable to set socket option SO_TIMEOUT");
+    }
     this.dc = dc;
   }
   
@@ -88,7 +94,7 @@ public class Worker implements Runnable {
         outStream =  new ObjectOutputStream(socket.getOutputStream());
         while(true) {
           Message message = (Message) inStream.readObject();
-          if (message == null) break;
+          System.out.println("received");
           //client input quit
           if(message.op == 'q') {
             System.out.println(message.user + " log out");
@@ -115,6 +121,13 @@ public class Worker implements Runnable {
           }
         }
         socket.close();
+    } catch (SocketTimeoutException e) {
+      System.out.println("Time Out");
+      try {
+        socket.close();
+      } catch (IOException e2) {
+       e2.printStackTrace();
+      }     
     } catch (SocketException se) {
        se.printStackTrace();
        System.exit(0);
