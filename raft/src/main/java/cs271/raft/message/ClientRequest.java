@@ -4,7 +4,6 @@ import java.io.Serializable;
 import cs271.raft.message.Message;
 
 public class ClientRequest extends Message implements Serializable {
-  private static final long serialVersionUID = -5931871829935756704L;
   private String user;
   private char op;
   private String post;

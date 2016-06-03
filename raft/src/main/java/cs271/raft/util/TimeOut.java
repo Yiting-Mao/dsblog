@@ -3,9 +3,9 @@ package cs271.raft.util;
 import java.util.Random;
 
 public class TimeOut {
-  static int lowBound = 200;
-  static int highBound = 500;
-  static int heartBeat = 100;
+  static int lowBound = 4000;
+  static int highBound = 10000;
+  static int heartBeat = 2000;
   private int timeOut;  
   private long preTime;
   public TimeOut() {
@@ -13,6 +13,7 @@ public class TimeOut {
   }
   public TimeOut(int s) {
     timeOut = heartBeat;
+    preTime = System.currentTimeMillis();
   }
   public void randomTimeOut() {
     Random rand = new Random();

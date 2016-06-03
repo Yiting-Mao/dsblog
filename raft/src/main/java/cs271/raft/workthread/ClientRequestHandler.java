@@ -29,7 +29,7 @@ public class ClientRequestHandler implements Runnable {
     this.socket = socket;
     this.leader = leader;
     try {
-      this.socket.setSoTimeout (10000);
+      this.socket.setSoTimeout (100000);
       in = new ObjectInputStream(socket.getInputStream());
       out = new ObjectOutputStream(socket.getOutputStream());
     } catch (IOException e) {
@@ -48,14 +48,16 @@ public class ClientRequestHandler implements Runnable {
               if (request.getPost() != null) {
                 BlogEntry be = new BlogEntry(request.getUser(), request.getPost());
                 LogEntry le = new LogEntry(be, leader.getCurrentTerm());
-                int index = leader.getLog().addLog(le);
+                int index = leader.getLog().addEntry(le);
+                System.out.println("index:" + index);
                 leader.spreadWork(index);
                 try {
-                   Thread.sleep(200);
+                   Thread.sleep(400);
                 } catch (Exception e) {
                    System.out.println(e);
                 }
                 if (leader.getCommitIndex() >= index) {
+                  System.out.println("Log added");
                   ToClient toClient = new ToClient(MessageType.TOCLIENT, true, null);
                   out.writeObject(toClient);
               }
@@ -64,14 +66,16 @@ public class ClientRequestHandler implements Runnable {
             ToClient toClient = new ToClient(MessageType.TOCLIENT, true, null);
             out.writeObject(toClient);
             Blog blog = leader.getBlog();
+            System.out.println("Sending blog");
+            blog.print();
             out.writeObject(blog);
           } else if (request.getOp() == 'q') {
             System.out.println(request.getUser() + " log out");
             break;
           }
-        } 
-        socket.close();
+        }         
       }
+      socket.close();
     } catch (SocketTimeoutException e) {
       System.out.println("Time Out");
       try {

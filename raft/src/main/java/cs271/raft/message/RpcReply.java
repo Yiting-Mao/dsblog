@@ -4,10 +4,6 @@ import java.io.Serializable;
 import cs271.raft.message.Message;
 
 public class RpcReply extends Message implements Serializable{
-  /**
-	 * 
-	 */
-  private static final long serialVersionUID = -2912117967497983539L;
   private int term;
   private boolean success;
   private int index;

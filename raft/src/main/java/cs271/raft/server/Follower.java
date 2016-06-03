@@ -16,13 +16,17 @@ public class Follower extends Server {
   public Follower(){
     
   }
+  public Follower(String ip) {
+    super(State.FOLLOWER, ip);
+  }
   public Follower(Server s) {
     super(s, State.FOLLOWER);
   }
   public void start() {
+    System.out.println("Starting as a follower");
     try {
       ss = new ServerSocket(Configuration.getPORT());
-      System.out.println("System start:" + ss);
+      System.out.println("System listening:" + ss);
       while(true) {
         Socket incoming = ss.accept();
         System.out.println("System connecting and accepted:" + incoming);

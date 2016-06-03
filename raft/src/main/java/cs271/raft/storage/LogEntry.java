@@ -1,8 +1,10 @@
 package cs271.raft.storage;
 
+import java.io.Serializable;
+
 import cs271.raft.storage.BlogEntry;
 
-public class LogEntry {
+public class LogEntry implements Serializable{
   private BlogEntry blogEntry;
   private int term;
   public LogEntry() {

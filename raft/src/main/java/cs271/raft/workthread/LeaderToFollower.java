@@ -26,9 +26,9 @@ public class LeaderToFollower implements Runnable{
   private ObjectOutputStream out;
   public LeaderToFollower(String ip, Socket socket, Leader leader) throws IOException {
     this.ip = ip;
-    this.socket = socket;
-    in = new ObjectInputStream(socket.getInputStream()); //IOException
+    this.socket = socket;   
     out = new ObjectOutputStream(socket.getOutputStream()); //IOException   
+    in = new ObjectInputStream(socket.getInputStream()); //IOException
     this.leader = leader;
     workList = new LinkedList<Integer>();
     timeOut = new TimeOut(1);
@@ -37,72 +37,81 @@ public class LeaderToFollower implements Runnable{
   public void addWork(int index) {
     workList.add(index);
   }
-  private void sendAppendEntry (int index, Log log) throws IOException {
+  private void sendAppendEntry (int index, Log log) {
     int term = leader.getCurrentTerm();
-    String leaderId = ip;
+    String leaderId = leader.getIp();
     int prevLogIndex = index - 1;
     int prevLogTerm = leader.getLog().getTerm(prevLogIndex);    
     int leaderCommit = leader.getCommitIndex();
     AppendEntryRpc append = new AppendEntryRpc(MessageType.APPENDENTRY, term, leaderId, prevLogIndex, prevLogTerm, log, leaderCommit);
-    out.writeObject(append); //IOException   
+    try {
+       out.writeObject(append); //IOException  
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      System.out.println("Can't send AppendEntry");
+      e.printStackTrace();
+    }
   }
   
   private void updateInfo(int index) {
-    leader.setSingleMatch(this.ip, index);
-    leader.setSingleNext(this.ip, index + 1);
-    leader.updateCommit();
+    if (index >= 0) {
+      leader.setSingleMatch(this.ip, index);
+      /* by this way, nextIndex is useless */
+      leader.setSingleNext(this.ip, index + 1); 
+      leader.updateCommit();
+    }    
   }
+
   public void run(){
+    System.out.println("Starting LeaderToFollower");   
     while(true) {
+      boolean sent = false;
       if (!workList.isEmpty()) {
+        System.out.println("Sending AppendEntry");
         int index = workList.get(0);
         int matchIndex = leader.getSingleMatch(ip);
         if (index > matchIndex) {
+          System.out.println("sending entry" + index);
           Log log = new Log(leader.getLog().getEntries(index));
-          try {
-            sendAppendEntry(index, log);
-          } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-          }
+          sendAppendEntry(index, log);
           workList.remove(0);
+          sent = true;
         } else {
           workList.remove(0);
         }
       } else if (timeOut.isTimeOut()) {
+        System.out.println("Sending Heartbeat");
+        sendAppendEntry(leader.getLog().getLastIndex(), null);       
+        sent = true;
+      }   
+      if (sent) {
         try {
-          sendAppendEntry(leader.getLog().size(), null);
-        } catch (IOException e) {
+          Message message = (Message)in.readObject();
+          if (message.getType() == MessageType.RPCREPLY) {
+            RpcReply reply = (RpcReply) message;
+            int term = reply.getTerm();
+            boolean success = reply.isSuccess();
+            int index = reply.getIndex();
+            if (success) {
+              updateInfo(index);
+            } else if (term > leader.getCurrentTerm()) {
+              /**
+                * TODO: turn to follower
+                */
+            } else {
+              workList.add(0, index - 1);
+            }
+          }
+        } catch (ClassNotFoundException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
+        } catch (IOException e) {
+          // TODO Auto-generated catch block
+          System.out.println("Can't get reply");
+          e.printStackTrace();
         }
-      }   
-      
-      try {
-        Message message = (Message)in.readObject();
-        if (message.getType() == MessageType.RPCREPLY) {
-          RpcReply reply = (RpcReply) message;
-          int term = reply.getTerm();
-          boolean success = reply.isSuccess();
-          int index = reply.getIndex();
-          if (success) {
-            updateInfo(index);
-          } else if (term > leader.getCurrentTerm()) {
-            /**
-              * TODO: turn to follower
-              */
-          } else {
-            workList.add(0, index - 1);
-          }
-        }
-      } catch (ClassNotFoundException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-              
+        timeOut.refresh();
+      }            
     }
   }
 

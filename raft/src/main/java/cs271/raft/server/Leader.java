@@ -14,6 +14,7 @@ import java.net.ServerSocket;
 
 import cs271.raft.server.Server;
 import cs271.raft.server.State;
+import cs271.raft.storage.BlogEntry;
 import cs271.raft.util.Configuration;
 import cs271.raft.workthread.LeaderToFollower;
 import cs271.raft.workthread.ClientRequestHandler;
@@ -43,69 +44,67 @@ public class Leader extends Server {
   private void init() {
     nextIndex = new HashMap<String, Integer>();
     matchIndex = new HashMap<String, Integer>();
-    int lastIndex = this.getLog().size();
+    toFollowers = new HashMap<String, LeaderToFollower>();
+    int lastIndex = this.getLog().size() - 1;
     for (int i = 0; i < Configuration.getIps().size(); i++) {
       String ip = Configuration.getIps().get(i);
       if (this.ip.equals(ip)) continue;
-      nextIndex.put(ip, lastIndex);
-      matchIndex.put(ip, 0);
+      nextIndex.put(ip, lastIndex + 1);
+      matchIndex.put(ip, -1);
     }
     if (Configuration.isInChange()) {
       for (int i = 0; i < Configuration.getNewIps().size(); i++) {
         String ip = Configuration.getNewIps().get(i);
         if (this.ip.equals(ip)) continue;
         if (!nextIndex.containsKey(ip)) {
-          nextIndex.put(ip, lastIndex);
-          matchIndex.put(ip, 0);
+          nextIndex.put(ip, lastIndex + 1);
+          matchIndex.put(ip, -1);
         }
       }
     }
   }
   
   public void start() throws IOException{
+    System.out.println("Starting as a leader");
     for (int i = 0; i < Configuration.getIps().size(); i++) {
       String ip = Configuration.getIps().get(i);
       if (this.ip.equals(ip)) continue;
-      Socket socket = null;
       try {
-        socket = new Socket(ip, Configuration.getPORT());
+        Socket socket = new Socket(ip, Configuration.getPORT());
+        LeaderToFollower toFollower = new LeaderToFollower(ip, socket, this);
+        Thread t = new Thread(toFollower);
+        t.start();       
+        toFollowers.put(ip, toFollower);
+        System.out.println("Connected to follower" + ip);
       } catch (UnknownHostException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
       }
-      LeaderToFollower toFollower = new LeaderToFollower(ip, socket, this);
-      Thread t = new Thread(toFollower);
-      t.start();
-      toFollowers.put(ip, toFollower);
+      
     }
     if (Configuration.isInChange()) {
       for (int i = 0; i < Configuration.getNewIps().size(); i++) {
         String ip = Configuration.getNewIps().get(i);
         if (this.ip.equals(ip)) continue;
-        if (!nextIndex.containsKey(ip)) {
-          Socket socket = null;
+        if (!nextIndex.containsKey(ip)) {          
           try {
-            socket = new Socket(ip, Configuration.getPORT());
+            Socket socket = new Socket(ip, Configuration.getPORT());
+            LeaderToFollower toFollower = new LeaderToFollower(ip, socket, this);
+            Thread t = new Thread(toFollower);
+            t.start();
+            System.out.println("Connected to follower" + ip);
+            toFollowers.put(ip, toFollower);
           } catch (UnknownHostException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-          } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-          }
-          LeaderToFollower toFollower = new LeaderToFollower(ip, socket, this);
-          Thread t = new Thread(toFollower);
-          t.start();
-          toFollowers.put(ip, toFollower);
+          } 
+          
         }
       }
     }
     try {
       ss = new ServerSocket(Configuration.getPORT());
-      System.out.println("System start:" + ss);
+      System.out.println("System listening:" + ss);
       while(true) {
         Socket incoming = ss.accept();
         System.out.println("System connecting and accepted:" + incoming);
@@ -117,8 +116,6 @@ public class Leader extends Server {
     } catch (SocketException se) {
       se.printStackTrace();
       System.exit(0);
-    } catch (IOException e) {
-      e.printStackTrace();
     } 
   }
   
@@ -136,7 +133,7 @@ public class Leader extends Server {
   }
   
   public void setSingleMatch(String ip, int index) {
-    matchIndex.replace(ip, index);
+    matchIndex.put(ip, index);
   }
   
   public int getSingleNext(String ip) {
@@ -144,7 +141,7 @@ public class Leader extends Server {
   }
   
   public void setSingleNext(String ip, int index) {
-    nextIndex.replace(ip, index);
+    nextIndex.put(ip, index);
   }
   
   public void updateCommit() {
@@ -158,7 +155,10 @@ public class Leader extends Server {
       /*
        * TODO: apply to state machine
        */
-      commitIndex = mid;
+      System.out.println("mid = " + mid);
+      System.out.println("commitIndex = " + commitIndex);
+     // this.getLog().print();
+      commit(mid);
     }
   }  
 }

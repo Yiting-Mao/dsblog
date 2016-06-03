@@ -2,10 +2,6 @@ package cs271.raft.message;
 
 import java.io.Serializable;
 public class Message implements Serializable {
-  /**
-	 * 
-	 */
-  private static final long serialVersionUID = 2664326821627008613L;
   public enum MessageType {
     APPENDENTRY,
     REQUESTVOTE,

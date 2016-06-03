@@ -6,12 +6,8 @@ import cs271.raft.storage.Log;
 import cs271.raft.message.Message;
 
 public class AppendEntryRpc extends Message implements Serializable{
-  /**
-	 * 
-	 */
-  private static final long serialVersionUID = 1026337179316716919L;
   private int term;
-  private String leaderId;
+  private String leaderId; //it actually stores leader ip
   private int prevLogIndex;
   private int prevLogTerm;
   private Log log;

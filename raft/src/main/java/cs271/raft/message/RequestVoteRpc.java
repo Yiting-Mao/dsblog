@@ -4,10 +4,6 @@ import java.io.Serializable;
 import cs271.raft.message.Message;
 
 class RequestVoteRpc extends Message implements Serializable{
-  /**
-	 * 
-	 */
-  private static final long serialVersionUID = -5970246788866602925L;
   private int term;
   private int candidateId;
   private int lastLogIndex;

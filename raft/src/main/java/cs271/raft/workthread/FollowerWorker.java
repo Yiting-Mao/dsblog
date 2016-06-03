@@ -3,10 +3,8 @@ package cs271.raft.workthread;
 import java.net.Socket;
 import java.net.SocketException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import cs271.raft.message.AppendEntryRpc;
 import cs271.raft.message.Message;
 import cs271.raft.message.Message.MessageType;
@@ -28,59 +26,82 @@ public class FollowerWorker implements Runnable {
   public FollowerWorker(Socket socket, Follower follower) {
     this.follower = follower;
     this.socket = socket;
+  }
+  
+  private void acceptAE(AppendEntryRpc append) throws IOException {
+    Log log = append.getLog();
+    int prevIndex = append.getPrevLogIndex();
+    if(log != null) {
+      follower.getLog().appendLog(prevIndex, log);
+    }      
+    int lastIndex = follower.getLog().getLastIndex();
+    int leaderCommit = append.getLeaderCommit();
+    if (leaderCommit > follower.getCommitIndex()) {
+      /*
+       * TODO: Update blog
+       */
+      int newIndex = leaderCommit > lastIndex ? lastIndex : leaderCommit;
+      follower.commit(newIndex);
+    }
+    RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), true, lastIndex);
+    out.writeObject(reply);
+  }
+  public void run() {
+    System.out.println("Starting FollowerWorker...");
     try {
       in = new ObjectInputStream(socket.getInputStream());
       out = new ObjectOutputStream(socket.getOutputStream());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-  
-  public void run() {
-    try {
       while(true) {
         Message message = (Message)in.readObject();
         if (message.getType() == MessageType.APPENDENTRY) {
+          System.out.println("Processing AppendEntryRpc");
           AppendEntryRpc append = (AppendEntryRpc) message;
           int term = append.getTerm();
-          if (follower.getCurrentTerm() <= term) {
+          if (follower.getCurrentTerm() <= term) {   
+            
+            /* update leaderIp info */       
             if(follower.getCurrentTerm() < term) {
               follower.setCurrentTerm(term);
-              follower.setLeaderIp(socket.getRemoteSocketAddress().toString());
+              follower.setLeaderIp(append.getLeaderId());
+              System.out.println("leader ip" + follower.getLeaderIp());
+            } else if (follower.getLeaderIp() == null) {
+              follower.setLeaderIp(append.getLeaderId());
+              System.out.println("leader ip" + follower.getLeaderIp());
             }        
-            Log log = append.getLog();
+            
+            /* send the reply */
             int prevIndex = append.getPrevLogIndex();
-            LogEntry entry = follower.getLog().getEntry(prevIndex);
-            //replicate successfully
-            if (entry != null && entry.getTerm() == append.getPrevLogTerm()) {
-              
-              follower.getLog().appendLog(prevIndex, log);
-              int lastIndex = append.getPrevLogIndex() + log.size();
-              int leaderCommit = append.getLeaderCommit();
-              if (leaderCommit > follower.getCommitIndex()) {
-                /*
-                 * TODO: Update blog
-                 */
-                  follower.setCommitIndex(leaderCommit > lastIndex ? lastIndex : leaderCommit);
+            if (prevIndex >= 0) {
+              LogEntry entry = follower.getLog().getEntry(prevIndex);
+              if (entry != null && entry.getTerm() == append.getPrevLogTerm()) {
+                acceptAE(append);
+              } else {
+                RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), false, append.getPrevLogIndex() + 1);
+                out.writeObject(reply);
               }
-              /*
-               * TODO: store in file
-               */
-              RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), true, lastIndex);
+            } else if (prevIndex == -1) {
+              acceptAE(append);
+            } else if (prevIndex == -2) {
+              RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), true, -1);
               out.writeObject(reply);
             } else {
-              RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), false, append.getPrevLogIndex() + 1);
-              out.writeObject(reply);
-            }            
-          } else {
+              System.out.println("prevIndex shouldn't < -2, something wrong");
+              System.exit(0);
+            }
+          } else { 
+            /* follower's term > leader's term */
             RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), false, append.getPrevLogIndex() + 1);
             out.writeObject(reply);
           }          
-        } else if (message.getType() == MessageType.CLIENTREQUEST) { //tell client the ip of leader
+        } else if (message.getType() == MessageType.CLIENTREQUEST) { 
+          /* tell client the ip of leader */
+          System.out.println("Processing ClientRequest");
           ToClient reply = new ToClient(MessageType.TOCLIENT, false, follower.getLeaderIp());
           out.writeObject(reply);
+          break;
         }
       }
+      socket.close();
     } catch (SocketException se) {
        se.printStackTrace();
        System.exit(0);

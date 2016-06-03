@@ -28,6 +28,7 @@ public class Client {
   private BufferedReader bin;
   private String leaderIp;
   private String name;
+  private Blog blog;
   public Client() throws IOException {
     init();
   }
@@ -35,53 +36,56 @@ public class Client {
     Random rand = new Random();    
     int num = rand.nextInt(Configuration.getSize());
     leaderIp = Configuration.getIps().get(num);
-    bin = new BufferedReader(new InputStreamReader(System.in));
-    connect();  //IOException
-    System.out.println("Input your name...");
-    /* get inputs from user */    
-    name = bin.readLine(); //IOException
- 
+    //leaderIp = "128.111.84.202";
+    bin = new BufferedReader(new InputStreamReader(System.in)); 
+    blog = null;
   }
   
   private void connect() throws IOException {  
     socket = new Socket(leaderIp, Configuration.getPORT()); 
-    in = new ObjectInputStream(socket.getInputStream());
     out = new ObjectOutputStream(socket.getOutputStream());
+    in = new ObjectInputStream(socket.getInputStream());   
   }
   
   private void post(String post) throws IOException, ClassNotFoundException {
     ClientRequest request = new ClientRequest(MessageType.CLIENTREQUEST, name, 'p', post);  
     out.writeObject(request);
+    System.out.println("request sent");
     ToClient reply = (ToClient)in.readObject();
+    System.out.println(reply.isSuccess());
     if(!reply.isSuccess()) {
       leaderIp = reply.getInfo();
+      socket.close();
       connect();
       post(post);
     }         
   } 
   
   private void lookUp() throws IOException, ClassNotFoundException {
+    blog = null;
     ClientRequest request = new ClientRequest(MessageType.CLIENTREQUEST, name, 'l', null);
     out.writeObject(request);
     ToClient reply = (ToClient)in.readObject(); //ClassNotFoundException
     if(reply.isSuccess()) {
-      Blog blog = (Blog)in.readObject();
-      System.out.println("------blog starts------");
+      blog = (Blog)in.readObject();
       blog.print();
-      System.out.println("------blog ends------");
     } else {
       leaderIp = reply.getInfo();
+      socket.close();
       connect();
       lookUp();
     }   
   } 
   public void interact() throws ClassNotFoundException {
-    try {                  
-      System.out.println("use operation:");
-      System.out.println("'<p> <content>' to post");
-      System.out.println("'<l>' to look up");
-      System.out.println("'<q>' to quit");
+   
+    System.out.println("Input your name...");
+    /* get inputs from user */     
+    try {               
+      name = bin.readLine(); //IOException
+      connect();  //IOException    
       while(true) {
+        System.out.println("--------------------------------------------------------------------------");
+        System.out.println("use: '<p> <content>' to post, '<l>' to look up, '<q>' to quit...");
         String input = bin.readLine();
         char op = input.charAt(0);
         if (op == 'l') {

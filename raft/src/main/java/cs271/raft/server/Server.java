@@ -3,6 +3,7 @@ package cs271.raft.server;
 import cs271.raft.server.State;
 import cs271.raft.storage.Log;
 import cs271.raft.storage.Blog;
+import cs271.raft.storage.BlogEntry;
 public class Server {  
   /* persistent state on all servers(update on stable storage before responding to RPCs) */
   int currentTerm; //latest term server has seen */
@@ -46,8 +47,9 @@ public class Server {
 	  currentTerm = 0;
 	  votedFor = -1;
 	  log = new Log();
-	  commitIndex = 0;
-	  lastApplied = 0;
+	  blog = new Blog();
+	  commitIndex = -1;
+	  lastApplied = -1;
     this.state = state;
     this.ip = ip;
     //conf = new Configuration();
@@ -92,6 +94,21 @@ public class Server {
   public void setLastApplied(int astApplied) {
   	this.lastApplied = astApplied;
   }
-
+  
+  public String getIp() {
+    return this.ip;
+  }
+  
+  public void setIp(String ip) {
+    this.ip = ip;
+  }
+  public void commit(int newIndex) {
+    for (int i = commitIndex + 1; i <= newIndex; i++) {
+      BlogEntry entry = this.getLog().getEntry(i).getBlogEntry();
+      if(entry == null) System.out.println("entry null");
+      this.getBlog().addEntry(entry);
+    }
+    commitIndex = newIndex;
+  }
 
 }

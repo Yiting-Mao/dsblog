@@ -6,15 +6,11 @@ import java.util.List;
 
 import cs271.raft.storage.BlogEntry;
 public class Blog implements Serializable {
-  /**
-   * 
-   */
-  private static final long serialVersionUID = -7468287070701411305L;
   private List<BlogEntry> blog;
   public Blog() {
     blog = new ArrayList<BlogEntry>();
   }
-  public void addBlog(BlogEntry entry) {
+  public void addEntry(BlogEntry entry) {
     blog.add(entry);
   }
   public void print() {
