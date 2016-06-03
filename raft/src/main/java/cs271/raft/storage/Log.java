@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cs271.raft.storage.LogEntry;
+import cs271.raft.storage.PersistentStorage;
 
 public class Log implements Serializable{
   private List<LogEntry> entries;
@@ -24,6 +25,8 @@ public class Log implements Serializable{
   
   public int addEntry(LogEntry entry) {
     entries.add(entry);
+    System.out.println("Update Persistent Log");
+    PersistentStorage.setLog(this);
     return entries.size() - 1;
   }
   
@@ -44,6 +47,8 @@ public class Log implements Serializable{
     if (prevIndex + log.size() < last) {
       delete(prevIndex + log.size() + 1);
     }
+    System.out.println("Update Persistent Log");
+    PersistentStorage.setLog(this);
   }
   //last entry is size() - 1
   public int size() {

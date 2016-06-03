@@ -2,8 +2,12 @@
 package cs271.raft;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Scanner;
 
 import cs271.raft.client.Client;
 import cs271.raft.server.State;
@@ -40,6 +44,7 @@ public class Raft implements Runnable {
     }
   }
   public static void main(String args[]) throws IOException, ClassNotFoundException {
+    
     System.out.println("usage: '<l> <id>' to start a leader, '<f> <id>' to start a follower, 'c' to start a client");
     BufferedReader bin = new BufferedReader(new InputStreamReader(System.in));
     String input = bin.readLine();

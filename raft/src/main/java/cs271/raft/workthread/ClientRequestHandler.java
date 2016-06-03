@@ -75,10 +75,14 @@ public class ClientRequestHandler implements Runnable {
           }
         }         
       }
+      in.close();
+      out.close();
       socket.close();
     } catch (SocketTimeoutException e) {
       System.out.println("Time Out");
       try {
+        in.close();
+        out.close();
         socket.close();
       } catch (IOException e2) {
        e2.printStackTrace();

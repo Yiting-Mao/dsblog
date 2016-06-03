@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.net.ConnectException;
 
 import cs271.raft.util.TimeOut;
 import cs271.raft.server.Leader;
@@ -14,6 +16,7 @@ import cs271.raft.message.Message;
 import cs271.raft.message.Message.MessageType;
 import cs271.raft.message.RpcReply;
 import cs271.raft.storage.Log;
+import cs271.raft.util.Configuration;
 
 
 public class LeaderToFollower implements Runnable{
@@ -37,20 +40,14 @@ public class LeaderToFollower implements Runnable{
   public void addWork(int index) {
     workList.add(index);
   }
-  private void sendAppendEntry (int index, Log log) {
+  private void sendAppendEntry (int index, Log log) throws IOException{
     int term = leader.getCurrentTerm();
     String leaderId = leader.getIp();
     int prevLogIndex = index - 1;
     int prevLogTerm = leader.getLog().getTerm(prevLogIndex);    
     int leaderCommit = leader.getCommitIndex();
     AppendEntryRpc append = new AppendEntryRpc(MessageType.APPENDENTRY, term, leaderId, prevLogIndex, prevLogTerm, log, leaderCommit);
-    try {
-       out.writeObject(append); //IOException  
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      System.out.println("Can't send AppendEntry");
-      e.printStackTrace();
-    }
+    out.writeObject(append); //IOException     
   }
   
   private void updateInfo(int index) {
@@ -61,29 +58,77 @@ public class LeaderToFollower implements Runnable{
       leader.updateCommit();
     }    
   }
+  
+  private void reconnect() {
+    try {
+      socket.close();
+      while(true) {
+        try {
+          socket = new Socket(ip, Configuration.getPORT());
+          break;   
+        } catch (ConnectException e) {
+          System.out.println("Reconnect failed");
+          try {
+            Thread.sleep(800);
+          } catch (InterruptedException e1) {  
+            System.out.println("Sleep Interrupted");
+          }
+        } catch (UnknownHostException e) {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        } 
+      }
+      LeaderToFollower toFollower = new LeaderToFollower(ip, socket, leader);
+      Thread t = new Thread(toFollower);
+      t.start(); 
+      leader.addToFollower(ip, toFollower);
+    } catch (IOException e) {
+      System.out.println("Exception while closing socket");
+    }       
+  }
 
   public void run(){
     System.out.println("Starting LeaderToFollower");   
     while(true) {
       boolean sent = false;
+      
+      /* has something to send*/
       if (!workList.isEmpty()) {
         System.out.println("Sending AppendEntry");
         int index = workList.get(0);
         int matchIndex = leader.getSingleMatch(ip);
+        
+        /* leader thinks the follower haven't got this entry before */
         if (index > matchIndex) {
           System.out.println("sending entry" + index);
           Log log = new Log(leader.getLog().getEntries(index));
-          sendAppendEntry(index, log);
+          try {
+            sendAppendEntry(index, log); //IOException  
+          } catch (IOException e) {
+            System.out.println("Can't send AppendEntry");
+            reconnect(); //reconnect creates a new thread, this thread ends
+            break;
+          }        
           workList.remove(0);
           sent = true;
         } else {
           workList.remove(0);
         }
+        
+        /* have nothing specific to send but reach a timeout */
       } else if (timeOut.isTimeOut()) {
         System.out.println("Sending Heartbeat");
-        sendAppendEntry(leader.getLog().getLastIndex(), null);       
+        try {
+          sendAppendEntry(leader.getLog().getLastIndex(), null);  //IOException  
+        } catch (IOException e) {
+          System.out.println("Can't send AppendEntry");
+          reconnect();
+          break;
+        }     
         sent = true;
       }   
+      
+      /* due with the reply */
       if (sent) {
         try {
           Message message = (Message)in.readObject();
@@ -103,12 +148,11 @@ public class LeaderToFollower implements Runnable{
             }
           }
         } catch (ClassNotFoundException e) {
-          // TODO Auto-generated catch block
           e.printStackTrace();
         } catch (IOException e) {
-          // TODO Auto-generated catch block
-          System.out.println("Can't get reply");
-          e.printStackTrace();
+          System.out.println("Can't get reply, trying reconnect");
+          reconnect();
+          break;
         }
         timeOut.refresh();
       }            

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.net.ConnectException;
 import java.io.IOException;
 import java.net.ServerSocket;
 
@@ -77,7 +78,11 @@ public class Leader extends Server {
         toFollowers.put(ip, toFollower);
         System.out.println("Connected to follower" + ip);
       } catch (UnknownHostException e) {
+       
         // TODO Auto-generated catch block
+        e.printStackTrace();
+      } catch (ConnectException e) {
+        System.out.println("Can't connect");
         e.printStackTrace();
       }
       
@@ -144,12 +149,16 @@ public class Leader extends Server {
     nextIndex.put(ip, index);
   }
   
+  public void addToFollower(String ip, LeaderToFollower toFollower) {
+    toFollowers.put(ip, toFollower);
+  }
+  
   public void updateCommit() {
     List<Integer> tmp = new ArrayList<Integer>();
     for (Map.Entry<String, Integer> entry : matchIndex.entrySet()) {
       tmp.add(entry.getValue()); 
     }
-    Collections.sort(tmp, Collections.reverseOrder());
+    Collections.sort(tmp);
     int mid = tmp.get(tmp.size() / 2);
     if (mid > commitIndex) {
       /*

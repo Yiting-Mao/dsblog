@@ -4,6 +4,7 @@ import cs271.raft.server.State;
 import cs271.raft.storage.Log;
 import cs271.raft.storage.Blog;
 import cs271.raft.storage.BlogEntry;
+import cs271.raft.storage.PersistentStorage;
 public class Server {  
   /* persistent state on all servers(update on stable storage before responding to RPCs) */
   int currentTerm; //latest term server has seen */
@@ -44,9 +45,17 @@ public class Server {
     this.state = state;
   }
   public Server(State state, String ip) {
-	  currentTerm = 0;
-	  votedFor = -1;
-	  log = new Log();
+	  currentTerm = PersistentStorage.getTerm();
+	  votedFor = PersistentStorage.getVoted();
+	  log = PersistentStorage.getLog();
+    System.out.println("Init term: " + currentTerm);
+    System.out.println("Init voted: " + votedFor);
+    if (log == null) {
+      log = new Log();
+    } else {
+      System.out.println("getting persistent log...");
+      log.print();
+    }
 	  blog = new Blog();
 	  commitIndex = -1;
 	  lastApplied = -1;

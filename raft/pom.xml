@@ -22,4 +22,29 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  
+  <build>
+      <plugins>
+          <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>2.0.2</version>
+          <configuration>
+                  <source>1.6</source>
+                  <target>1.6</target>
+          </configuration>
+       </plugin>
+          <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <configuration>
+               <mainClass>cs271.raft.Raft</mainClass>
+          </configuration>
+          </plugin>
+      </plugins>
+      <resources>
+           <resource>
+              <directory>src/main/resource</directory>
+           </resource>
+      </resources>
+  </build>
 </project>
