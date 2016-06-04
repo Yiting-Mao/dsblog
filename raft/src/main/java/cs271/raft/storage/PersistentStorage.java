@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 
 import cs271.raft.storage.Log;
 
@@ -42,11 +43,11 @@ public class PersistentStorage {
     } 
   }
   
-  public static int getVoted() {
-    int voted = -1;
+  public static String getVoted() {
+    String voted = null;
     try {
       BufferedReader in = new BufferedReader(new FileReader(voted_f)); 
-      voted = Integer.parseInt(in.readLine());
+      voted = in.readLine();
       in.close();
     } catch (Exception e) {      
       e.printStackTrace();
@@ -54,10 +55,11 @@ public class PersistentStorage {
     return voted;
   }
   
-  public static void setVoted(int voted) {
+  public static void setVoted(String voted) {
     try {
-      FileOutputStream out = new FileOutputStream(voted_f, false);
-      out.write(voted);
+      FileOutputStream outstream = new FileOutputStream(voted_f, false);
+      PrintWriter out = new PrintWriter(outstream);
+      out.print(voted);
       out.close();
     } catch (Exception e) {
       e.printStackTrace();

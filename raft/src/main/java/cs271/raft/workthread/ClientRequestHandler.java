@@ -20,6 +20,10 @@ import cs271.raft.storage.LogEntry;
 import cs271.raft.storage.Blog;
 import cs271.raft.storage.BlogEntry;
 
+/**
+  * Created by Leader to handle client request. 
+  * It is possible to receive appendentry/ requestvote as well.
+  */
 public class ClientRequestHandler implements Runnable {
   private Socket socket;
   private Leader leader;

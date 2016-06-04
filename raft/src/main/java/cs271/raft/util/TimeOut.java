@@ -35,4 +35,7 @@ public class TimeOut {
   public void setPreTime(long preTime) {
     this.preTime = preTime;
   }
+  public int getRemain() {
+    return (int) (timeOut - (System.currentTimeMillis() - preTime));
+  }
 }

@@ -3,15 +3,15 @@ package cs271.raft.message;
 import java.io.Serializable;
 import cs271.raft.message.Message;
 
-class RequestVoteRpc extends Message implements Serializable{
+public class RequestVoteRpc extends Message implements Serializable{
   private int term;
-  private int candidateId;
+  private String candidateIp;
   private int lastLogIndex;
   private int lastLogTerm;
-  public RequestVoteRpc(MessageType type, int term, int id, int index, int lastTerm) {
+  public RequestVoteRpc(MessageType type, int term, String ip, int index, int lastTerm) {
     super(type);
     this.term = term;
-    this.candidateId = id;
+    this.candidateIp = ip;
     this.lastLogIndex = index;
     this.lastLogTerm = lastTerm;
   }
@@ -21,11 +21,11 @@ class RequestVoteRpc extends Message implements Serializable{
   public void setTerm(int term) {
   	this.term = term;
   }
-  public int getCandidateId() {
-  	return candidateId;
+  public String getCandidateIp() {
+  	return candidateIp;
   }
-  public void setCandidateId(int candidateId) {
-  	this.candidateId = candidateId;
+  public void setCandidateIp(String candidateIp) {
+  	this.candidateIp = candidateIp;
   }
   public int getLastLogIndex() {
   	return lastLogIndex;

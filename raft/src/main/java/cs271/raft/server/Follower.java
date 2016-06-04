@@ -20,7 +20,7 @@ public class Follower extends Server {
     super(State.FOLLOWER, ip);
   }
   public Follower(Server s) {
-    super(s, State.FOLLOWER);
+    super(State.FOLLOWER, s);
   }
   public void start() {
     System.out.println("Starting as a follower");

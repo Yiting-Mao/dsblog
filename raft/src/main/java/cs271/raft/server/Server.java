@@ -8,7 +8,7 @@ import cs271.raft.storage.PersistentStorage;
 public class Server {  
   /* persistent state on all servers(update on stable storage before responding to RPCs) */
   int currentTerm; //latest term server has seen */
-  int votedFor; // candidateId that received vote in current term(or null is none)
+  String votedFor; // candidateId that received vote in current term(or null is none)
   Log log;
   Blog blog;
   
@@ -34,7 +34,7 @@ public class Server {
     ip = s.ip;
    
   }
-  public Server(Server s, State state) {
+  public Server(State state, Server s) {
     currentTerm = s.currentTerm;
     votedFor = s.votedFor;
     log = s.log;
@@ -72,10 +72,10 @@ public class Server {
     this.currentTerm = currentTerm;
   }
 	
-  public int getVotedFor() {
+  public String getVotedFor() {
   	return votedFor;
   }
-  public void setVotedFor(int votedFor) {
+  public void setVotedFor(String votedFor) {
   	this.votedFor = votedFor;
   }
   public Log getLog() {

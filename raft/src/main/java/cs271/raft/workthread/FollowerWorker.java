@@ -8,11 +8,15 @@ import java.io.ObjectOutputStream;
 import cs271.raft.message.AppendEntryRpc;
 import cs271.raft.message.Message;
 import cs271.raft.message.Message.MessageType;
+import cs271.raft.message.RequestVoteRpc;
 import cs271.raft.message.RpcReply;
 import cs271.raft.message.ToClient;
 import cs271.raft.server.Follower;
 import cs271.raft.storage.Log;
 import cs271.raft.storage.LogEntry;
+
+/** It's for followers to due with appendentry, requestvote, and client request 
+ */
 public class FollowerWorker implements Runnable {
   private Follower follower;
   private Socket socket;
@@ -46,6 +50,35 @@ public class FollowerWorker implements Runnable {
     RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), true, lastIndex);
     out.writeObject(reply);
   }
+  private boolean grantVote(RequestVoteRpc request) {
+    int term = request.getTerm();
+    String candidateIp = request.getCandidateIp();
+    int lastLogIndex = request.getLastLogIndex();
+    int lastLogTerm = request.getLastLogTerm();
+    int myLastIndex = follower.getLog().getLastIndex();
+    int myLastTerm = follower.getLog().getTerm(myLastIndex);
+    int currentTerm = follower.getCurrentTerm();
+    if (term < currentTerm) {
+      return false;
+    } else if (term == currentTerm) {
+      if ((follower.getVotedFor() == null || follower.getVotedFor().equals(candidateIp))
+      && (myLastTerm < lastLogTerm || myLastTerm == lastLogTerm && myLastIndex <= lastLogIndex)) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      follower.setCurrentTerm(term);
+      if (myLastTerm < lastLogTerm || myLastTerm == lastLogTerm && myLastIndex <= lastLogIndex) {
+        follower.setVotedFor(candidateIp);
+        return true;
+      } else {
+        follower.setVotedFor(null);
+        return false;
+      }
+    }
+  }
+  
   public void run() {
     System.out.println("Starting FollowerWorker...");
     try {
@@ -92,6 +125,7 @@ public class FollowerWorker implements Runnable {
             /* follower's term > leader's term */
             RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), false, append.getPrevLogIndex() + 1);
             out.writeObject(reply);
+            break;
           }          
         } else if (message.getType() == MessageType.CLIENTREQUEST) { 
           /* tell client the ip of leader */
@@ -99,9 +133,19 @@ public class FollowerWorker implements Runnable {
           ToClient reply = new ToClient(MessageType.TOCLIENT, false, follower.getLeaderIp());
           out.writeObject(reply);
           break;
+        } else if (message.getType() == MessageType.REQUESTVOTE) {
+          RequestVoteRpc request = (RequestVoteRpc) message;
+          boolean granted = grantVote(request);
+          RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), granted, request.getTerm());
+          out.writeObject(reply);
+          System.out.println("voted:" + granted);
+          break;     
         }
       }
+      out.close();
+      in.close();
       socket.close();
+      System.out.println("Follower Worker ends");
     } catch (SocketException se) {
        se.printStackTrace();
        System.exit(0);

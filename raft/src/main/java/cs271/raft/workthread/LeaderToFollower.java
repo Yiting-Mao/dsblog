@@ -18,7 +18,7 @@ import cs271.raft.message.RpcReply;
 import cs271.raft.storage.Log;
 import cs271.raft.util.Configuration;
 
-
+/* This is for leader to send append entry/ heartbeat and due with the replies */
 public class LeaderToFollower implements Runnable{
   private String ip;
   private Leader leader;

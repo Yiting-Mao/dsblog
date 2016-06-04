@@ -15,7 +15,6 @@ import java.net.ServerSocket;
 
 import cs271.raft.server.Server;
 import cs271.raft.server.State;
-import cs271.raft.storage.BlogEntry;
 import cs271.raft.util.Configuration;
 import cs271.raft.workthread.LeaderToFollower;
 import cs271.raft.workthread.ClientRequestHandler;
@@ -39,7 +38,7 @@ public class Leader extends Server {
     init();
   }
   public Leader(Server s) {
-    super(s, State.LEADER);
+    super(State.LEADER, s);
     init();
   }
   private void init() {
@@ -65,7 +64,7 @@ public class Leader extends Server {
     }
   }
   
-  public void start() throws IOException{
+  public void start() {
     System.out.println("Starting as a leader");
     for (int i = 0; i < Configuration.getIps().size(); i++) {
       String ip = Configuration.getIps().get(i);
@@ -77,11 +76,8 @@ public class Leader extends Server {
         t.start();       
         toFollowers.put(ip, toFollower);
         System.out.println("Connected to follower" + ip);
-      } catch (UnknownHostException e) {
-       
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (ConnectException e) {
+
+      } catch (Exception e) {
         System.out.println("Can't connect");
         e.printStackTrace();
       }
@@ -99,7 +95,7 @@ public class Leader extends Server {
             t.start();
             System.out.println("Connected to follower" + ip);
             toFollowers.put(ip, toFollower);
-          } catch (UnknownHostException e) {
+          } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
           } 
@@ -118,7 +114,7 @@ public class Leader extends Server {
         Thread t = new Thread(handler);
         t.start();
       }
-    } catch (SocketException se) {
+    } catch (Exception se) {
       se.printStackTrace();
       System.exit(0);
     } 
@@ -169,5 +165,6 @@ public class Leader extends Server {
      // this.getLog().print();
       commit(mid);
     }
-  }  
+  } 
+
 }
