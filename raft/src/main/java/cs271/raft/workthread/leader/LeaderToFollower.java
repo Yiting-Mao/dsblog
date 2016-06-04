@@ -1,4 +1,4 @@
-package cs271.raft.workthread;
+package cs271.raft.workthread.leader;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -27,6 +27,7 @@ public class LeaderToFollower implements Runnable{
   private Socket socket;
   private ObjectInputStream in;
   private ObjectOutputStream out;
+  private boolean alive;
   public LeaderToFollower(String ip, Socket socket, Leader leader) throws IOException {
     this.ip = ip;
     this.socket = socket;   
@@ -35,6 +36,7 @@ public class LeaderToFollower implements Runnable{
     this.leader = leader;
     workList = new LinkedList<Integer>();
     timeOut = new TimeOut(1);
+    alive = true;
   }
   
   public void addWork(int index) {
@@ -89,7 +91,7 @@ public class LeaderToFollower implements Runnable{
 
   public void run(){
     System.out.println("Starting LeaderToFollower");   
-    while(true) {
+    while(alive) {
       boolean sent = false;
       
       /* has something to send*/

@@ -1,4 +1,4 @@
-package cs271.raft.workthread;
+package cs271.raft.workthread.follower;
 
 import java.net.Socket;
 import java.net.SocketException;
@@ -73,7 +73,6 @@ public class FollowerWorker implements Runnable {
         follower.setVotedFor(candidateIp);
         return true;
       } else {
-        follower.setVotedFor(null);
         return false;
       }
     }
@@ -145,7 +144,7 @@ public class FollowerWorker implements Runnable {
       out.close();
       in.close();
       socket.close();
-      System.out.println("Follower Worker ends");
+      System.out.println("Follower Worker Terminates");
     } catch (SocketException se) {
        se.printStackTrace();
        System.exit(0);

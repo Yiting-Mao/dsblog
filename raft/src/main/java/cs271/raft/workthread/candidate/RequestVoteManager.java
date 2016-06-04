@@ -1,5 +1,6 @@
-package cs271.raft.workthread;
+package cs271.raft.workthread.candidate;
 
+import java.util.HashMap;
 import java.util.List;
 import java.net.Socket;
 import java.util.Map;
@@ -8,7 +9,7 @@ import cs271.raft.server.Candidate;
 
 import cs271.raft.util.Configuration;
 import cs271.raft.util.TimeOut;
-import cs271.raft.workthread.RequestVoteSender;
+import cs271.raft.workthread.candidate.RequestVoteSender;
 
 
 public class RequestVoteManager implements Runnable{
@@ -40,7 +41,7 @@ public class RequestVoteManager implements Runnable{
       }
       timeOut.randomTimeOut();     
       candidate.setCurrentTerm(candidate.getCurrentTerm() + 1);
-     
+      senders = new HashMap<String, RequestVoteSender>();
       for (Map.Entry<String, Socket> entry : connected.entrySet()) {
         String ip = entry.getKey();
         Socket s = entry.getValue();
@@ -67,7 +68,8 @@ public class RequestVoteManager implements Runnable{
           }
         }       
       }
-    }  
+    } 
+    System.out.println("RequestVoteManager Terminates"); 
   }
   public void stop() {
     alive = false;

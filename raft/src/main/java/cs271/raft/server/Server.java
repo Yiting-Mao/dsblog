@@ -70,6 +70,9 @@ public class Server {
 
   public void setCurrentTerm(int currentTerm) {
     this.currentTerm = currentTerm;
+    PersistentStorage.setTerm(currentTerm);
+    /* when updated to a new term, the corresponding votedFor is set to null */
+    setVotedFor(null);
   }
 	
   public String getVotedFor() {
@@ -77,6 +80,7 @@ public class Server {
   }
   public void setVotedFor(String votedFor) {
   	this.votedFor = votedFor;
+    PersistentStorage.setVoted(votedFor);
   }
   public Log getLog() {
   	return log;

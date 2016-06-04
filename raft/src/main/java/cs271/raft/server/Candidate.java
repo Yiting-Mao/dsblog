@@ -12,8 +12,8 @@ import cs271.raft.Raft;
 import cs271.raft.server.Server;
 import cs271.raft.server.State;
 import cs271.raft.util.Configuration;
-import cs271.raft.workthread.RequestVoteManager;
-import cs271.raft.workthread.RequestVoteSender;
+import cs271.raft.workthread.candidate.RequestVoteManager;
+import cs271.raft.workthread.candidate.RequestVoteSender;
 
 public class Candidate extends Server {
   private Map<String, Integer> agreedTerm;

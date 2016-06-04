@@ -1,4 +1,4 @@
-package cs271.raft.workthread;
+package cs271.raft.workthread.leader;
 
 import java.net.Socket;
 import java.net.SocketException;
@@ -29,22 +29,25 @@ public class ClientRequestHandler implements Runnable {
   private Leader leader;
   private ObjectInputStream in;
   private ObjectOutputStream out;
+  private boolean alive;
   public ClientRequestHandler(Socket socket, Leader leader) {
     this.socket = socket;
     this.leader = leader;
+    alive = true;
     try {
       this.socket.setSoTimeout (100000);
       in = new ObjectInputStream(socket.getInputStream());
       out = new ObjectOutputStream(socket.getOutputStream());
     } catch (IOException e) {
       e.printStackTrace();
+      alive = false;
     }
   }
   
   public void run() {
     System.out.println("handling requests from client.");
     try {
-        while(true) {
+        while(alive) {
           Message message = (Message) in.readObject();
           if (message.getType() == MessageType.CLIENTREQUEST) {
             ClientRequest request = (ClientRequest) message;
@@ -82,6 +85,7 @@ public class ClientRequestHandler implements Runnable {
       in.close();
       out.close();
       socket.close();
+      System.out.println("ClientRequestHandler Terminates");
     } catch (SocketTimeoutException e) {
       System.out.println("Time Out");
       try {
@@ -91,14 +95,9 @@ public class ClientRequestHandler implements Runnable {
       } catch (IOException e2) {
        e2.printStackTrace();
       }     
-    } catch (SocketException se) {
-       se.printStackTrace();
-       System.exit(0);
-    } catch (IOException e) {
+    } catch (Exception e) {
        e.printStackTrace();
-    } catch (ClassNotFoundException cn) {
-       cn.printStackTrace();
-    }
+    } 
   }
 
   public Socket getSocket() {
@@ -123,6 +122,10 @@ public class ClientRequestHandler implements Runnable {
 
   public void setOut(ObjectOutputStream out) {
     this.out = out;
+  }
+  
+  public void stop() {
+    alive = false;
   }
   
 }

@@ -8,7 +8,7 @@ import java.net.SocketException;
 import cs271.raft.server.Server;
 import cs271.raft.server.State;
 import cs271.raft.util.Configuration;
-import cs271.raft.workthread.FollowerWorker;
+import cs271.raft.workthread.follower.FollowerWorker;
 public class Follower extends Server {
   private FollowerWorker fromLeader;
   private String leaderIp;

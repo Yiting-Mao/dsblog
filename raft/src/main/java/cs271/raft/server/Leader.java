@@ -6,18 +6,14 @@ import java.util.Map;
 import java.util.Collections;
 import java.util.HashMap;
 import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.net.ConnectException;
-import java.io.IOException;
 import java.net.ServerSocket;
 
 
 import cs271.raft.server.Server;
 import cs271.raft.server.State;
 import cs271.raft.util.Configuration;
-import cs271.raft.workthread.LeaderToFollower;
-import cs271.raft.workthread.ClientRequestHandler;
+import cs271.raft.workthread.leader.LeaderToFollower;
+import cs271.raft.workthread.leader.ClientRequestHandler;
 
 public class Leader extends Server {
   /* String is the ip address, considering during configuration change,
@@ -27,6 +23,8 @@ public class Leader extends Server {
   private Map<String, Integer> nextIndex; 
   private Map<String, Integer> matchIndex;
   private Map<String, LeaderToFollower> toFollowers;
+  private Map<String, Socket> connectedServers;
+  private List<String> unconnectedServers;
   private ServerSocket ss;
   
   /* keep track of agreed ips for each log entry */
@@ -166,5 +164,9 @@ public class Leader extends Server {
       commit(mid);
     }
   } 
+  
+  public void turnToFollower() {
+    
+  }
 
 }

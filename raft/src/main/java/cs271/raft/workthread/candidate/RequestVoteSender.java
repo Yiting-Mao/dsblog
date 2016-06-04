@@ -1,4 +1,4 @@
-package cs271.raft.workthread;
+package cs271.raft.workthread.candidate;
 
 import cs271.raft.message.RequestVoteRpc;
 import cs271.raft.message.RpcReply;
@@ -56,6 +56,7 @@ public class RequestVoteSender implements Runnable{
       e.printStackTrace();
       candidate.getConnectedServers().remove(ip);
       candidate.getUnconnectedServers().add(ip);
-    }     
+    }  
+    System.out.println("RequestVoteSender Terminates");
   }
 }
