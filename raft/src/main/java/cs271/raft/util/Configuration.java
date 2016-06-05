@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 
 public class Configuration {
-  static int PORT = 6666;
+  static int PORT = 6667;
   
   private static Map<Integer, String> Ids;
   static {

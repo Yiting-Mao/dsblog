@@ -46,16 +46,21 @@ public class RequestVoteSender implements Runnable{
       RpcReply reply = (RpcReply)in.readObject();
       if (reply.isSuccess()) {
         candidate.updateAgreedTerm(ip, reply.getIndex());
-      } else if (reply.getTerm() > term) {
-        /** TODO: Turn to follower */
+        if (candidate.hasMajority() && candidate.isAlive()) {
+          System.out.println("Has votes from majority");
+          candidate.turnToLeader();
+        }
+      } else if (reply.getTerm() > term && candidate.isAlive()) {
+        candidate.setCurrentTerm(reply.getTerm());
+        candidate.turnToFollower();
       }
       in.close();
       out.close(); 
       socket.close();  
     } catch (Exception e) {
       e.printStackTrace();
-      candidate.getConnectedServers().remove(ip);
-      candidate.getUnconnectedServers().add(ip);
+      candidate.getConnected().remove(ip);
+      candidate.getUnconnected().add(ip);
     }  
     System.out.println("RequestVoteSender Terminates");
   }

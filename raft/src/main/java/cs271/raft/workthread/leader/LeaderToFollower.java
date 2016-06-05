@@ -62,31 +62,9 @@ public class LeaderToFollower implements Runnable{
   }
   
   private void reconnect() {
-    try {
-      socket.close();
-      while(true) {
-        try {
-          socket = new Socket(ip, Configuration.getPORT());
-          break;   
-        } catch (ConnectException e) {
-          System.out.println("Reconnect failed");
-          try {
-            Thread.sleep(800);
-          } catch (InterruptedException e1) {  
-            System.out.println("Sleep Interrupted");
-          }
-        } catch (UnknownHostException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        } 
-      }
-      LeaderToFollower toFollower = new LeaderToFollower(ip, socket, leader);
-      Thread t = new Thread(toFollower);
-      t.start(); 
-      leader.addToFollower(ip, toFollower);
-    } catch (IOException e) {
-      System.out.println("Exception while closing socket");
-    }       
+    leader.getConnected().remove(ip);
+    leader.removeToFollower(ip);
+    leader.addUnconnected(ip);
   }
 
   public void run(){
@@ -141,10 +119,11 @@ public class LeaderToFollower implements Runnable{
             int index = reply.getIndex();
             if (success) {
               updateInfo(index);
-            } else if (term > leader.getCurrentTerm()) {
-              /**
-                * TODO: turn to follower
-                */
+            } else if (term > leader.getCurrentTerm() && leader.isAlive()) {
+              
+              /* if leader's term is outdated, turn to a follower */
+              leader.setCurrentTerm(term);
+              leader.turnToFollower();
             } else {
               workList.add(0, index - 1);
             }
@@ -159,8 +138,20 @@ public class LeaderToFollower implements Runnable{
         timeOut.refresh();
       }            
     }
+    try {
+      out.close();
+      in.close();
+      socket.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.out.println("Something wrong when trying to close the socket");
+    }
+    System.out.println("LeaderToFollower Terminates");
   }
 
+  public void stop() {
+    alive = false;
+  }
   public Socket getSocket() {
     return socket;
   }

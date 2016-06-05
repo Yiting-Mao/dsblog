@@ -12,14 +12,16 @@ import cs271.raft.Raft;
 import cs271.raft.server.Server;
 import cs271.raft.server.State;
 import cs271.raft.util.Configuration;
+import cs271.raft.workthread.candidate.IncomingRequestHandler;
 import cs271.raft.workthread.candidate.RequestVoteManager;
 import cs271.raft.workthread.candidate.RequestVoteSender;
 
 public class Candidate extends Server {
   private Map<String, Integer> agreedTerm;
-  private Map<String, Socket> connectedServers;
+  private Map<String, Socket> connected;
   private Map<String, RequestVoteSender> senders;
-  private List<String> unconnectedServers;
+  private List<String> unconnected;
+  private List<IncomingRequestHandler> handlers;
   private RequestVoteManager manager;
   private ServerSocket ss;
   
@@ -38,16 +40,17 @@ public class Candidate extends Server {
   
   private void init() {
     agreedTerm = new HashMap<String, Integer>();
-    connectedServers = new HashMap<String, Socket>();
+    connected = new HashMap<String, Socket>();
     senders = new HashMap<String, RequestVoteSender>();
-    unconnectedServers = new ArrayList<String>();
+    unconnected = new ArrayList<String>();
+    handlers = new ArrayList<IncomingRequestHandler>();
     
     /* set all servers' agreedTerm to  -1 */
     for (int i = 0; i < Configuration.getIps().size(); i++) {
       String ip = Configuration.getIps().get(i);
       if (this.ip.equals(ip)) continue;
       agreedTerm.put(ip, -1);
-      unconnectedServers.add(ip);
+      unconnected.add(ip);
     }
     if (Configuration.isInChange()) {
       for (int i = 0; i < Configuration.getNewIps().size(); i++) {
@@ -55,16 +58,16 @@ public class Candidate extends Server {
         if (this.ip.equals(ip)) continue;
         if (!agreedTerm.containsKey(ip)) {
           agreedTerm.put(ip, -1);
-          unconnectedServers.add(ip);
+          unconnected.add(ip);
         }
       }
     }
   }
   public void start() {
     System.out.println("Starting as a candidate");
+    setAlive(true);
     manager = new RequestVoteManager(this);
-    Thread t = new Thread(manager);
-    t.start();
+    new Thread(manager).start();
     
     try {
       ss = new ServerSocket(Configuration.getPORT());
@@ -73,20 +76,23 @@ public class Candidate extends Server {
         Socket incoming = ss.accept();
         System.out.println("System connecting and accepted:" + incoming);
         /* creates a new thread to due with this connection, continues accepting other socket */
-      
+        IncomingRequestHandler handler= new IncomingRequestHandler(incoming, this);
+        new Thread(handler).start();
+        handlers.add(handler);
       }
     } catch (Exception se) {
-      se.printStackTrace();
     } 
-    System.out.println("Stop listening");
+    System.out.println("Candidate Stops listening");
+  }
+  public List<IncomingRequestHandler> getRequestHandlers() {
+    return handlers;
+  }
+  public Map<String, Socket> getConnected() {
+    return connected;
   }
 
-  public Map<String, Socket> getConnectedServers() {
-    return connectedServers;
-  }
-
-  public void setConnectedServers(Map<String, Socket> connectedServers) {
-    this.connectedServers = connectedServers;
+  public void setConnected(Map<String, Socket> connected) {
+    this.connected = connected;
   }
 
   public Map<String, RequestVoteSender> getSenders() {
@@ -97,12 +103,12 @@ public class Candidate extends Server {
     this.senders = senders;
   }
   
-  public List<String> getUnconnectedServers() {
-    return unconnectedServers;
+  public List<String> getUnconnected() {
+    return unconnected;
   }
   
-  public void setUnconnectedServers(List<String> unconnected) {
-    this.unconnectedServers = unconnected;
+  public void setUnconnected(List<String> unconnected) {
+    this.unconnected = unconnected;
   }
   
   public void updateAgreedTerm(String ip, int term) {
@@ -121,25 +127,26 @@ public class Candidate extends Server {
       return false;
     }
   }  
-  public void turnToLeader() {
+  
+  public void stop() {
+    setAlive(false);
     try {
       ss.close();
     } catch (Exception e) {
       e.printStackTrace();
     }   
     manager.stop();
+  }
+  
+  public void turnToLeader() {
+    stop();
     Raft raft = new Raft(State.LEADER, this);
     Thread t = new Thread(raft);
     t.start();
   }
   
   public void turnToFollower() {
-    try {
-      ss.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }   
-    manager.stop();
+    stop();
     Raft raft = new Raft(State.FOLLOWER, this);
     Thread t = new Thread(raft);
     t.start();

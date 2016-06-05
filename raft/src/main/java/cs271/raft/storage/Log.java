@@ -34,7 +34,6 @@ public class Log implements Serializable{
     int last = entries.size() - 1;
     if (prevIndex > last) {
       System.out.println("prevIndex can't match, shouldn't append");
-      System.exit(0);
     }
     for (int i = 0; i < log.size(); i++) {
       if (prevIndex + i + 1 <= last) {

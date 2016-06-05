@@ -1,7 +1,6 @@
 package cs271.raft.workthread.follower;
 
 import java.net.Socket;
-import java.net.SocketException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -14,6 +13,7 @@ import cs271.raft.message.ToClient;
 import cs271.raft.server.Follower;
 import cs271.raft.storage.Log;
 import cs271.raft.storage.LogEntry;
+import cs271.raft.util.TimeOut;
 
 /** It's for followers to due with appendentry, requestvote, and client request 
  */
@@ -22,6 +22,8 @@ public class FollowerWorker implements Runnable {
   private Socket socket;
   private ObjectInputStream in;
   private ObjectOutputStream out;
+  private String leaderIp;
+  private boolean alive;
   
   public FollowerWorker() {
     
@@ -30,9 +32,17 @@ public class FollowerWorker implements Runnable {
   public FollowerWorker(Socket socket, Follower follower) {
     this.follower = follower;
     this.socket = socket;
+    try {
+      in = new ObjectInputStream(socket.getInputStream());
+      out = new ObjectOutputStream(socket.getOutputStream());
+      alive = true;
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
   
   private void acceptAE(AppendEntryRpc append) throws IOException {
+           
     Log log = append.getLog();
     int prevIndex = append.getPrevLogIndex();
     if(log != null) {
@@ -78,61 +88,65 @@ public class FollowerWorker implements Runnable {
     }
   }
   
+  /* when follower's term <= leader's, handleAE */
+  private void handleAE(AppendEntryRpc append) throws Exception {
+    System.out.println("HandleAE"); 
+    int term = append.getTerm();      
+      /* update leaderIp info */   
+    leaderIp = append.getLeaderId();    
+    if(follower.getCurrentTerm() < term ) {
+      follower.setCurrentTerm(term);
+    }       
+    if (!leaderIp.equals(follower.getLeaderIp())) {
+      follower.setLeaderIp(leaderIp);
+      System.out.println("leader ip" + leaderIp);
+    }
+    /* send the reply */
+    int prevIndex = append.getPrevLogIndex();
+    if (prevIndex >= 0) {
+      LogEntry entry = follower.getLog().getEntry(prevIndex);
+      if (entry != null && entry.getTerm() == append.getPrevLogTerm()) {
+        acceptAE(append);
+      } else {
+        RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), false, append.getPrevLogIndex() + 1);
+        out.writeObject(reply);
+      }
+    } else if (prevIndex == -1) {
+      acceptAE(append);
+    } else if (prevIndex == -2) {
+      RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), true, -1);
+      out.writeObject(reply);
+    } else {
+      System.out.println("prevIndex shouldn't < -2, something wrong");
+    }
+  }
+  
   public void run() {
     System.out.println("Starting FollowerWorker...");
     try {
-      in = new ObjectInputStream(socket.getInputStream());
-      out = new ObjectOutputStream(socket.getOutputStream());
-      while(true) {
+      while(alive) {
         Message message = (Message)in.readObject();
-        if (message.getType() == MessageType.APPENDENTRY) {
+        MessageType type = message.getType();
+        if (type == MessageType.APPENDENTRY) {
           System.out.println("Processing AppendEntryRpc");
           AppendEntryRpc append = (AppendEntryRpc) message;
           int term = append.getTerm();
+          System.out.println("CurrentTerm:" + follower.getCurrentTerm() + "RequestTerm:" + append.getTerm());
           if (follower.getCurrentTerm() <= term) {   
-            
-            /* update leaderIp info */       
-            if(follower.getCurrentTerm() < term) {
-              follower.setCurrentTerm(term);
-              follower.setLeaderIp(append.getLeaderId());
-              System.out.println("leader ip" + follower.getLeaderIp());
-            } else if (follower.getLeaderIp() == null) {
-              follower.setLeaderIp(append.getLeaderId());
-              System.out.println("leader ip" + follower.getLeaderIp());
-            }        
-            
-            /* send the reply */
-            int prevIndex = append.getPrevLogIndex();
-            if (prevIndex >= 0) {
-              LogEntry entry = follower.getLog().getEntry(prevIndex);
-              if (entry != null && entry.getTerm() == append.getPrevLogTerm()) {
-                acceptAE(append);
-              } else {
-                RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), false, append.getPrevLogIndex() + 1);
-                out.writeObject(reply);
-              }
-            } else if (prevIndex == -1) {
-              acceptAE(append);
-            } else if (prevIndex == -2) {
-              RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), true, -1);
-              out.writeObject(reply);
-            } else {
-              System.out.println("prevIndex shouldn't < -2, something wrong");
-              System.exit(0);
-            }
-          } else { 
-            /* follower's term > leader's term */
+               
+            handleAE(append);     
+          } else {
             RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), false, append.getPrevLogIndex() + 1);
             out.writeObject(reply);
             break;
-          }          
-        } else if (message.getType() == MessageType.CLIENTREQUEST) { 
+          }
+        } else if (type == MessageType.CLIENTREQUEST) { 
           /* tell client the ip of leader */
           System.out.println("Processing ClientRequest");
           ToClient reply = new ToClient(MessageType.TOCLIENT, false, follower.getLeaderIp());
           out.writeObject(reply);
           break;
-        } else if (message.getType() == MessageType.REQUESTVOTE) {
+        } else if (type == MessageType.REQUESTVOTE) {
           RequestVoteRpc request = (RequestVoteRpc) message;
           boolean granted = grantVote(request);
           RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), granted, request.getTerm());
@@ -141,17 +155,35 @@ public class FollowerWorker implements Runnable {
           break;     
         }
       }
+    } catch (Exception e) {
+      System.out.println("IOException");
+      int term = follower.getCurrentTerm();
+      if (leaderIp != null) {
+        TimeOut timeOut = new TimeOut();
+        System.out.println("TimeOut: " + timeOut.getTimeOut());
+        try {
+          Thread.sleep(timeOut.getTimeOut());
+        } catch (Exception e1) {
+          e1.printStackTrace();
+        }
+      }
+      if (term == follower.getCurrentTerm()) {
+        follower.turnToCandidate();
+      }
+    }   
+    try {
       out.close();
       in.close();
-      socket.close();
-      System.out.println("Follower Worker Terminates");
-    } catch (SocketException se) {
-       se.printStackTrace();
-       System.exit(0);
-    } catch (IOException e) {
-       e.printStackTrace();
-    } catch (ClassNotFoundException cn) {
-       cn.printStackTrace();
+      socket.close();     
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+    follower.getWorkers().remove(this);
+    System.out.println("FollowerWorker Terminates");
   }
+  
+  public void stop() {
+    alive = false;
+  }
+  
 }

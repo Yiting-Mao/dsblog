@@ -18,7 +18,8 @@ public class Server {
   
   State state;
   String ip;
-  //private Configuration conf;  
+  //private Configuration conf; 
+  boolean alive; 
   
   public Server() {
     
@@ -123,5 +124,10 @@ public class Server {
     }
     commitIndex = newIndex;
   }
-
+  public boolean isAlive() {
+    return alive;
+  }
+  public void setAlive(boolean alive) {
+    this.alive = alive;
+  }
 }

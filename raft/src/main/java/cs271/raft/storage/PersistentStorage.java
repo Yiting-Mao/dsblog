@@ -33,10 +33,12 @@ public class PersistentStorage {
     } 
     return term;
   }
-  public static void setTerm(int term) {    
+  public static void setTerm(int term) { 
+    System.out.println("Updating Rersistent Term");   
     try {
-      FileOutputStream out = new FileOutputStream(term_f, false);
-      out.write(term);   
+      FileOutputStream outstream = new FileOutputStream(term_f, false);
+      PrintWriter out = new PrintWriter(outstream);
+      out.print(term);   
       out.close();
     } catch (Exception e) {
       e.printStackTrace();
@@ -75,7 +77,7 @@ public class PersistentStorage {
       in.close();
       instream.close();
     } catch (Exception e) {      
-      e.printStackTrace();
+      System.out.println("No Persistent Log");
     } 
     return log;
   }
