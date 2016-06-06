@@ -1,84 +1,111 @@
 package cs271.raft.util;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
 
-public class Configuration {
-  static int PORT = 6667;
+public class Configuration implements Serializable{
+  private static int PORT = 6667;
   
   private static Map<Integer, String> Ids;
   static {
     Ids = new HashMap<Integer, String>();
     Ids.put(1, "128.111.84.202");
-    Ids.put(2, "128.111.84.228");
-    Ids.put(3, "128.111.84.253");
+    Ids.put(2, "128.111.84.210");
+    Ids.put(3, "128.111.84.228");
+    Ids.put(4, "128.111.84.245");
+    Ids.put(5, "128.111.84.253");
   } 
-  private static List<String> Ips = Arrays.asList("128.111.84.202", "128.111.84.228", "128.111.84.253");
-  private static boolean inChange = false;
-  private static List<String> newIps;
+  private List<String> Ips;
+  private boolean inChange;
+  private List<String> newIps;
+  private int index;
   
-  public static void setConfiguration (List<String> ips) {
-    newIps = null;    
-    Ips = ips;
+  public static Map<Integer, String> getIds() {
+    return Ids;
+  }
+  public static int getPORT() {
+    return PORT;
+  }
+  public Configuration() {
+    
+  }
+  public Configuration(String input) {
+    if(input.equals("")) {
+      Ips = Arrays.asList("128.111.84.202", "128.111.84.210", "128.111.84.228");
+    }
+    else {
+      String[] parts = input.split(" ");     
+      Ips = new ArrayList<String>();
+      for(String part : parts) {
+        int id = Integer.parseInt(part);
+        Ips.add(Ids.get(id));
+      }
+    }    
+    System.out.println(Ips);
+    inChange = false;
+    index = -1;
   }
   
-  public static void changeConfiguration (List<String> Ips) {
-    newIps = Ips;
-    inChange = true;
+  public void changeConfiguration (String newIds, int index) {
+    if(newIds != null) {
+      newIps = new ArrayList<String>();
+      String[] parts = newIds.split(" ");
+      for(String part : parts) {
+        int id = Integer.parseInt(part);
+        newIps.add(Ids.get(id));
+      }
+      inChange = true;
+    }   
+    this.index = index;   
   }
   
-  public static void commitConfiguration () {
+  public void commitConfiguration (int index) {
     if (inChange) {
       Ips = newIps;
       newIps = null;
       inChange = false;
+      this.index = index;
     }
   }
   
-  public static int getSize() {
+  public int getIndex() {
+    return index;
+  }
+  public int getSize() {
     return Ips.size();
   }
-
-  public static int getPORT() {
-    return PORT;
-  }
-
-  public static void setPORT(int port) {
-    PORT = port;
-  }
-
-  public static List<String> getIps() {
+  public List<String> getIps() {
     return Ips;
   }
 
-  public static void setIps(List<String> iPs) {
+  public void setIps(List<String> iPs) {
     Ips = iPs;
   }
 
-  public static boolean isInChange() {
+  public boolean isInChange() {
     return inChange;
   }
 
-  public static void setInChange(boolean inChange) {
-    Configuration.inChange = inChange;
+  public void setInChange(boolean inChange) {
+    this.inChange = inChange;
   }
 
-  public static List<String> getNewIps() {
+  public List<String> getNewIps() {
     return newIps;
   }
 
-  public static void setNewIps(List<String> newIps) {
-    Configuration.newIps = newIps;
-  }
-
-  public static Map<Integer, String> getIds() {
-    return Ids;
-  }
-
-  public static void setIds(Map<Integer, String> ids) {
-    Ids = ids;
+  public boolean contains(String ip) {
+    if (Ips.contains(ip)) {
+      return true;
+    } else if (inChange && newIps.contains(ip)) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }

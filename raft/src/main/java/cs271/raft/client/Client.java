@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import cs271.raft.message.Message.MessageType;
+import cs271.raft.message.MessageType;
 import cs271.raft.message.ToClient;
 import cs271.raft.message.ClientRequest;
 import cs271.raft.storage.Blog;
@@ -31,15 +31,18 @@ public class Client {
   private String leaderIp;
   private List<String> aliveServers;
   private List<String> deadServers;
+  private Configuration conf;
   private String name;
   public Client() throws IOException {
     init();
+    
   }
   private void init() throws IOException {   
     aliveServers = new ArrayList<String>();
     deadServers = new ArrayList<String>();
-    for (int i = 0; i < Configuration.getIps().size(); i++) {
-      String ip = Configuration.getIps().get(i);
+    conf = new Configuration("");
+    for (int i = 0; i < conf.getIps().size(); i++) {
+      String ip = conf.getIps().get(i);
       aliveServers.add(ip);
     }
     randomLeader();
@@ -117,9 +120,30 @@ public class Client {
     } catch (Exception e) {
       connect();
       lookUp();
+    }      
+  } 
+  
+  private void reconfigure(String newIds) {
+    try {
+      ClientRequest request = new ClientRequest(MessageType.CLIENTREQUEST, name, 'c', newIds);  
+      out.writeObject(request);
+      System.out.println("request sent");
+      ToClient reply = (ToClient)in.readObject();
+      System.out.println(reply.isSuccess());
+      /**
+        * TODO: update client's configuration
+        */
+      if(!reply.isSuccess()) {
+        leaderIp = reply.getInfo();
+        connect();
+        reconfigure(newIds);
+      }       
+    } catch (Exception e) {
+      connect();
+      reconfigure(newIds);
     }
       
-  } 
+  }
   public void interact() {
    
     System.out.println("Input your name...");
@@ -132,8 +156,8 @@ public class Client {
     }
     
     while(true) {
-      System.out.println("--------------------------------------------------------------------------");
-      System.out.println("use: '<p> <content>' to post, '<l>' to look up, '<q>' to quit...");
+      System.out.println("------------------------------------------------------------------------------------------------------------------");
+      System.out.println("use: '<p> <content>' to post, '<l>' to look up, '<c> <id> <id>...(1-5)' to set new configuration, '<q>' to quit...");
       String input = null;
       try {
         input = bin.readLine();
@@ -146,6 +170,9 @@ public class Client {
       } else if (op == 'p') {
         input = input.substring(1).trim();
         post(input);
+      } else if (op == 'c') {
+        input = input.substring(1).trim();
+        reconfigure(input);
       } else if (op == 'q') {
         ClientRequest request = new ClientRequest(MessageType.CLIENTREQUEST, name, 'q', null);
         try {

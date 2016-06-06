@@ -41,7 +41,7 @@ public class Raft implements Runnable {
   }
   
   /* startpoint of the program */
-  public static void main(String args[]) throws IOException, ClassNotFoundException {
+  public static void main(String args[]) throws Exception {
     System.out.println("usage: '<l>/<c>/<f> <id>' to start a leader/ candidate/ follower, 'u' to start a user");
     BufferedReader bin = new BufferedReader(new InputStreamReader(System.in));
     String input = bin.readLine();

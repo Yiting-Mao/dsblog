@@ -9,7 +9,7 @@ import java.io.IOException;
 import cs271.raft.message.AppendEntryRpc;
 import cs271.raft.message.ClientRequest;
 import cs271.raft.message.Message;
-import cs271.raft.message.Message.MessageType;
+import cs271.raft.message.MessageType;
 import cs271.raft.message.RequestVoteRpc;
 import cs271.raft.message.RpcReply;
 import cs271.raft.message.ToClient;
@@ -44,11 +44,11 @@ public class IncomingRequestHandler implements Runnable {
   
   private void handleCR(ClientRequest request) throws Exception{
     if (request.getOp() == 'p') {
-      if (request.getPost() != null) {
+      if (request.getPost() != null) {      
         BlogEntry be = new BlogEntry(request.getUser(), request.getPost());
         LogEntry le = new LogEntry(be, leader.getCurrentTerm());
         int index = leader.getLog().addEntry(le);
-        System.out.println("index:" + index);
+        System.out.println("index:" + index + ", " +request.getUser() + " posted:" + request.getPost());
         leader.spreadWork(index);
         try {
            Thread.sleep(400);
@@ -56,19 +56,27 @@ public class IncomingRequestHandler implements Runnable {
            System.out.println(e);
         }
         if (leader.getCommitIndex() >= index) {
-          System.out.println("Log added");
           ToClient toClient = new ToClient(MessageType.TOCLIENT, true, null);
           out.writeObject(toClient);
         }
       }
+      
     } else if (request.getOp() == 'l') {
+      System.out.println("Handling " + request.getUser() + "'s look up");
       ToClient toClient = new ToClient(MessageType.TOCLIENT, true, null);
       out.writeObject(toClient);    
-      Blog blog = leader.getBlog();
-      System.out.println("Sending blog");
-      blog.print();
+      Blog blog = leader.getBlog();     
       out.reset();
       out.writeObject(blog);
+      
+    } else if (request.getOp() == 'c') {
+      /* request.getPost() stores the newIds splited by space */
+      System.out.println("Handling reconfigure:" + request.getPost());
+      boolean result = leader.reconfigure(request.getPost());
+      System.out.println("reconfigure " + result);
+      ToClient toClient = new ToClient(MessageType.TOCLIENT, result, null);
+      out.writeObject(toClient);     
+      
     } else if (request.getOp() == 'q') {
       System.out.println(request.getUser() + " log out");
       alive = false;  
@@ -86,7 +94,6 @@ public class IncomingRequestHandler implements Runnable {
   }
 
   public void run() {
-    System.out.println("handling requests from client.");
     try {
       while(alive) {
         Message message = (Message) in.readObject();

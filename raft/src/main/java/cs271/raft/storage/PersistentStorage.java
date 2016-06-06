@@ -10,16 +10,19 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 
 import cs271.raft.storage.Log;
+import cs271.raft.util.Configuration;
 
 public class PersistentStorage {
   private static File log_f;
   private static File term_f;
   private static File voted_f;
+  private static File conf_f;
   static {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     log_f = new File(classLoader.getResource("log.txt").getFile());
     term_f = new File(classLoader.getResource("term.txt").getFile());
-    voted_f = new File(classLoader.getResource("voted.txt").getFile());    
+    voted_f = new File(classLoader.getResource("voted.txt").getFile()); 
+    conf_f = new File(classLoader.getResource("conf.txt").getFile()); 
   }
   
   public static int getTerm() {
@@ -89,9 +92,36 @@ public class PersistentStorage {
       out.writeObject(log);
       out.close();
       outstream.close();
-      System.out.println("log written");
+     // System.out.println("log written");
     } catch (Exception e) {
       e.printStackTrace();
     }   
+  }
+  
+  public static Configuration getConfiguration() {
+    Configuration conf = null;
+    try {
+      FileInputStream instream = new FileInputStream(conf_f);
+      ObjectInputStream in = new ObjectInputStream(instream);
+      conf = (Configuration)in.readObject();
+      in.close();
+      instream.close();
+    } catch (Exception e) {      
+      System.out.println("No Persistent Configuration");
+    } 
+    return conf;
+  }
+  
+  public static void setConfiguration(Configuration conf) {
+    try {
+      FileOutputStream outstream = new FileOutputStream(conf_f);
+      ObjectOutputStream out = new ObjectOutputStream(outstream);
+      out.writeObject(conf);
+      out.close();
+      outstream.close();
+      System.out.println("configuration written");
+    } catch (Exception e) {
+      e.printStackTrace();
+    } 
   }
  }

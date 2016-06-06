@@ -6,7 +6,7 @@ import java.net.Socket;
 
 import cs271.raft.message.AppendEntryRpc;
 import cs271.raft.message.Message;
-import cs271.raft.message.Message.MessageType;
+import cs271.raft.message.MessageType;
 import cs271.raft.message.RequestVoteRpc;
 import cs271.raft.message.RpcReply;
 import cs271.raft.message.ToClient;

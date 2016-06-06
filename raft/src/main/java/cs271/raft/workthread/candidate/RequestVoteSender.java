@@ -8,7 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-import cs271.raft.message.Message.MessageType;
+import cs271.raft.message.MessageType;
 
 public class RequestVoteSender implements Runnable{
   private String ip;

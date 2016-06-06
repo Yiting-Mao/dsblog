@@ -12,9 +12,11 @@ import cs271.raft.Raft;
 import cs271.raft.server.Server;
 import cs271.raft.server.State;
 import cs271.raft.util.Configuration;
+import cs271.raft.util.Majority;
 import cs271.raft.workthread.leader.LeaderToFollower;
 import cs271.raft.workthread.leader.IncomingRequestHandler;
 import cs271.raft.workthread.leader.ConnectionManager;
+import cs271.raft.workthread.leader.ReconfigurationHandler;
 
 public class Leader extends Server {
   /* String is the ip address, considering during configuration change,
@@ -34,7 +36,7 @@ public class Leader extends Server {
   //private Map<Integer, AgreeCollector> agrees; 
   public Leader() {   
   }
-  public Leader(String ip) {
+  public Leader(String ip) throws Exception {
     super(State.LEADER, ip);
     init();
   }
@@ -50,16 +52,16 @@ public class Leader extends Server {
     unconnected = new ArrayList<String>();
     handlers = new ArrayList<IncomingRequestHandler>();
     int lastIndex = this.getLog().size() - 1;
-    for (int i = 0; i < Configuration.getIps().size(); i++) {
-      String ip = Configuration.getIps().get(i);
+    for (int i = 0; i < conf.getIps().size(); i++) {
+      String ip = conf.getIps().get(i);
       if (this.ip.equals(ip)) continue;
       nextIndex.put(ip, lastIndex + 1);
       matchIndex.put(ip, -1);
       unconnected.add(ip);
     }
-    if (Configuration.isInChange()) {
-      for (int i = 0; i < Configuration.getNewIps().size(); i++) {
-        String ip = Configuration.getNewIps().get(i);
+    if (conf.isInChange()) {
+      for (int i = 0; i < conf.getNewIps().size(); i++) {
+        String ip = conf.getNewIps().get(i);
         if (this.ip.equals(ip)) continue;
         if (!nextIndex.containsKey(ip)) {
           nextIndex.put(ip, lastIndex + 1);
@@ -71,16 +73,21 @@ public class Leader extends Server {
   }
   
   public void start() {
+    System.out.println("--------------------------------------------------------------------------------------");
     System.out.println("Starting as a leader");
     setAlive(true);
     manager = new ConnectionManager(this);
     new Thread(manager).start();
+    if (conf.isInChange()) {
+      ReconfigurationHandler reconfigure = new ReconfigurationHandler(this, 1);
+      new Thread(reconfigure).start();
+    }
     try {
       ss = new ServerSocket(Configuration.getPORT());
-      System.out.println("System listening:" + ss);
+      System.out.println("Leader listening:" + ss);
       while(true) {
         Socket incoming = ss.accept();
-        System.out.println("System connecting and accepted:" + incoming);
+        System.out.println("Leader connecting and accepted:" + incoming);
         /* creates a new thread to due with this connection, continues accepting other socket */
         IncomingRequestHandler handler = new IncomingRequestHandler(incoming, this);
         new Thread(handler).start();
@@ -98,6 +105,76 @@ public class Leader extends Server {
     for (Map.Entry<String, LeaderToFollower> entry : toFollowers.entrySet()) {
       entry.getValue().addWork(index);
     }
+  }
+  
+  
+  public void updateCommit() {    
+    int mid = Majority.getValue(matchIndex, conf, ip);
+    if (mid > commitIndex) {
+      commit(mid);
+    }
+  } 
+  public void stop() {
+    setAlive(false);
+    try {
+      ss.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    } 
+    manager.stop();
+    for (int i = 0; i < handlers.size(); i++) {
+      handlers.get(i).stop();
+    }
+    for (Map.Entry<String, LeaderToFollower> entry : toFollowers.entrySet()) {
+      entry.getValue().stop(); 
+    }
+  }
+  
+  public boolean reconfigure(String newIds) {
+    ReconfigurationHandler handler = new ReconfigurationHandler(this, 0, newIds);
+    new Thread(handler).start();
+    try {
+      Thread.sleep(800);
+    } catch (Exception e) {
+      System.out.println("Leader Reconfigure Sleep Interrupted");
+    }
+    System.out.println(handler.getStage());
+    if (handler.getStage() >= 1) { //considers true when old and new has committed
+      return true;
+    } else {
+      return false;
+    }   
+  }
+  
+  public void updateFollowers() {
+    for (Map.Entry<String, LeaderToFollower> entry : toFollowers.entrySet()) {
+      if (!conf.contains(entry.getKey())) {
+        entry.getValue().stop(); 
+      }    
+      unconnected = new ArrayList<String>();
+      List<String> Ips = conf.getIps();
+      for (int i = 0; i < Ips.size(); i++) {
+        if (this.ip.equals(Ips.get(i))) continue;
+        if (!toFollowers.containsKey(Ips.get(i))) {
+          unconnected.add(Ips.get(i));
+        }
+      }
+      if (conf.isInChange()) {
+        List<String> newIps = conf.getNewIps();
+        for (int i = 0; i < newIps.size(); i++) {
+          String ip = newIps.get(i);
+          if (this.ip.equals(ip)) continue;
+          if (!toFollowers.containsKey(ip) && !unconnected.contains(ip)) {
+            unconnected.add(ip);
+          }
+        }
+      }
+    }
+  }
+  public void turnToFollower() {
+    stop();
+    Raft raft = new Raft(State.FOLLOWER, this);
+    new Thread(raft).start();
   }
   
   public int getSingleMatch(String ip) {
@@ -142,44 +219,6 @@ public class Leader extends Server {
   
   public List<IncomingRequestHandler> getHandlers() {
     return handlers;
-  }
-  public void updateCommit() {
-    List<Integer> tmp = new ArrayList<Integer>();
-    for (Map.Entry<String, Integer> entry : matchIndex.entrySet()) {
-      tmp.add(entry.getValue()); 
-    }
-    Collections.sort(tmp);
-    int mid = tmp.get(tmp.size() / 2);
-    if (mid > commitIndex) {
-      /*
-       * TODO: apply to state machine
-       */
-      System.out.println("mid = " + mid);
-      System.out.println("commitIndex = " + commitIndex);
-     // this.getLog().print();
-      commit(mid);
-    }
-  } 
-  public void stop() {
-    setAlive(false);
-    try {
-      ss.close();
-    } catch (Exception e) {
-      e.printStackTrace();
-    } 
-    manager.stop();
-    for (int i = 0; i < handlers.size(); i++) {
-      handlers.get(i).stop();
-    }
-    for (Map.Entry<String, LeaderToFollower> entry : toFollowers.entrySet()) {
-      entry.getValue().stop(); 
-    }
-  }
-  
-  public void turnToFollower() {
-    stop();
-    Raft raft = new Raft(State.FOLLOWER, this);
-    new Thread(raft).start();
   }
 
 }

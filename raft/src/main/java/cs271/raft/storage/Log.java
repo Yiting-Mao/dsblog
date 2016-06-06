@@ -25,11 +25,11 @@ public class Log implements Serializable{
   
   public int addEntry(LogEntry entry) {
     entries.add(entry);
-    System.out.println("Update Persistent Log");
     PersistentStorage.setLog(this);
     return entries.size() - 1;
   }
   
+  /* in the procedure of appending log, if found conf change, update conf */
   public void appendLog(int prevIndex, Log log) {
     int last = entries.size() - 1;
     if (prevIndex > last) {
@@ -46,9 +46,9 @@ public class Log implements Serializable{
     if (prevIndex + log.size() < last) {
       delete(prevIndex + log.size() + 1);
     }
-    System.out.println("Update Persistent Log");
     PersistentStorage.setLog(this);
   }
+
   //last entry is size() - 1
   public int size() {
     return entries.size();
@@ -72,6 +72,9 @@ public class Log implements Serializable{
     
   }
   public List<LogEntry> getEntries(int index) {
+    if (index == 0) {
+      return entries;
+    }
     List<LogEntry> tmp_entries = new ArrayList<LogEntry>();
     for (int i = index; i < entries.size(); i++) {
       tmp_entries.add(entries.get(i));

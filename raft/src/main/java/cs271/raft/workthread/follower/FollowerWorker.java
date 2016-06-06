@@ -1,16 +1,18 @@
 package cs271.raft.workthread.follower;
 
 import java.net.Socket;
+import java.util.List;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import cs271.raft.message.AppendEntryRpc;
 import cs271.raft.message.Message;
-import cs271.raft.message.Message.MessageType;
+import cs271.raft.message.MessageType;
 import cs271.raft.message.RequestVoteRpc;
 import cs271.raft.message.RpcReply;
 import cs271.raft.message.ToClient;
 import cs271.raft.server.Follower;
+import cs271.raft.storage.BlogEntry;
 import cs271.raft.storage.Log;
 import cs271.raft.storage.LogEntry;
 import cs271.raft.util.TimeOut;
@@ -41,19 +43,24 @@ public class FollowerWorker implements Runnable {
     }
   }
   
-  private void acceptAE(AppendEntryRpc append) throws IOException {
-           
+  private void acceptAE(AppendEntryRpc append) throws IOException {          
     Log log = append.getLog();
     int prevIndex = append.getPrevLogIndex();
     if(log != null) {
-      follower.getLog().appendLog(prevIndex, log);
+      follower.getLog().appendLog(prevIndex, log); 
+      List<LogEntry> entries = log.getEntries(0);
+      for (int i = 0; i < entries.size(); i++) {
+        BlogEntry be = entries.get(i).getBlogEntry();
+        if (be.getUser().equals("Reconfigure Stage One")) {
+          follower.getConf().changeConfiguration(be.getPost(), prevIndex + i + 1);
+        } else if (be.getUser().equals("Reconfigure Stage Two")) {
+          follower.getConf().commitConfiguration(prevIndex + i + 1);
+        }
+      }
     }      
     int lastIndex = follower.getLog().getLastIndex();
     int leaderCommit = append.getLeaderCommit();
     if (leaderCommit > follower.getCommitIndex()) {
-      /*
-       * TODO: Update blog
-       */
       int newIndex = leaderCommit > lastIndex ? lastIndex : leaderCommit;
       follower.commit(newIndex);
     }
@@ -90,7 +97,7 @@ public class FollowerWorker implements Runnable {
   
   /* when follower's term <= leader's, handleAE */
   private void handleAE(AppendEntryRpc append) throws Exception {
-    System.out.println("HandleAE"); 
+    //System.out.println("HandleAE"); 
     int term = append.getTerm();      
       /* update leaderIp info */   
     leaderIp = append.getLeaderId();    
@@ -99,7 +106,7 @@ public class FollowerWorker implements Runnable {
     }       
     if (!leaderIp.equals(follower.getLeaderIp())) {
       follower.setLeaderIp(leaderIp);
-      System.out.println("leader ip" + leaderIp);
+      System.out.println("leader ip: " + leaderIp);
     }
     /* send the reply */
     int prevIndex = append.getPrevLogIndex();
@@ -128,12 +135,12 @@ public class FollowerWorker implements Runnable {
         Message message = (Message)in.readObject();
         MessageType type = message.getType();
         if (type == MessageType.APPENDENTRY) {
-          System.out.println("Processing AppendEntryRpc");
+          //System.out.println("Processing AppendEntryRpc");
           AppendEntryRpc append = (AppendEntryRpc) message;
           int term = append.getTerm();
-          System.out.println("CurrentTerm:" + follower.getCurrentTerm() + "RequestTerm:" + append.getTerm());
+          //System.out.println("CurrentTerm:" + follower.getCurrentTerm() + "RequestTerm:" + append.getTerm());
           if (follower.getCurrentTerm() <= term) {   
-               
+            follower.getManager().reset();             
             handleAE(append);     
           } else {
             RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), false, append.getPrevLogIndex() + 1);
@@ -149,6 +156,7 @@ public class FollowerWorker implements Runnable {
         } else if (type == MessageType.REQUESTVOTE) {
           RequestVoteRpc request = (RequestVoteRpc) message;
           boolean granted = grantVote(request);
+          if (granted) follower.getManager().reset();
           RpcReply reply = new RpcReply(MessageType.RPCREPLY, follower.getCurrentTerm(), granted, request.getTerm());
           out.writeObject(reply);
           System.out.println("voted:" + granted);

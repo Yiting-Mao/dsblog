@@ -1,10 +1,15 @@
 package cs271.raft.server;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+
 import cs271.raft.server.State;
 import cs271.raft.storage.Log;
 import cs271.raft.storage.Blog;
 import cs271.raft.storage.BlogEntry;
 import cs271.raft.storage.PersistentStorage;
+import cs271.raft.util.Configuration;
 public class Server {  
   /* persistent state on all servers(update on stable storage before responding to RPCs) */
   int currentTerm; //latest term server has seen */
@@ -20,6 +25,7 @@ public class Server {
   String ip;
   //private Configuration conf; 
   boolean alive; 
+  Configuration conf;
   
   public Server() {
     
@@ -33,6 +39,7 @@ public class Server {
     lastApplied = s.lastApplied;
     state = s.state;
     ip = s.ip;
+    conf = s.conf;
    
   }
   public Server(State state, Server s) {
@@ -44,11 +51,13 @@ public class Server {
     lastApplied = s.lastApplied;
     ip = s.ip;
     this.state = state;
+    conf = s.conf;
   }
-  public Server(State state, String ip) {
+  public Server(State state, String ip) throws Exception{
 	  currentTerm = PersistentStorage.getTerm();
 	  votedFor = PersistentStorage.getVoted();
 	  log = PersistentStorage.getLog();
+    conf = PersistentStorage.getConfiguration();
     System.out.println("Init term: " + currentTerm);
     System.out.println("Init voted: " + votedFor);
     if (log == null) {
@@ -57,14 +66,33 @@ public class Server {
       System.out.println("getting persistent log...");
       log.print();
     }
+    /* if conf hasn't stored in file, let admin to set init configurations */
+    if (conf == null) {
+      System.out.println("input server ids(1-5) for init configuration, separate by space. Press enter to use default(1 2 3)");
+      BufferedReader bin = new BufferedReader(new InputStreamReader(System.in));
+      String input = bin.readLine();  
+      conf = new Configuration(input);   
+    } 
 	  blog = new Blog();
 	  commitIndex = -1;
 	  lastApplied = -1;
     this.state = state;
     this.ip = ip;
-    //conf = new Configuration();
-    
+    //conf = new Configuration(null);    
   }
+  public void commit(int newIndex) {
+    if (newIndex > log.getLastIndex()) {
+      newIndex = log.getLastIndex();
+    }
+    for (int i = commitIndex + 1; i <= newIndex; i++) {
+      BlogEntry entry = this.getLog().getEntry(i).getBlogEntry();
+      if(entry == null) System.out.println("entry null");
+      this.getBlog().addEntry(entry);
+    }
+    commitIndex = newIndex;
+    System.out.println("Commit Index " + commitIndex);
+  }
+  
   public int getCurrentTerm() {
     return currentTerm;
   }
@@ -116,18 +144,13 @@ public class Server {
   public void setIp(String ip) {
     this.ip = ip;
   }
-  public void commit(int newIndex) {
-    for (int i = commitIndex + 1; i <= newIndex; i++) {
-      BlogEntry entry = this.getLog().getEntry(i).getBlogEntry();
-      if(entry == null) System.out.println("entry null");
-      this.getBlog().addEntry(entry);
-    }
-    commitIndex = newIndex;
-  }
   public boolean isAlive() {
     return alive;
   }
   public void setAlive(boolean alive) {
     this.alive = alive;
+  }
+  public Configuration getConf() {
+    return conf;
   }
 }

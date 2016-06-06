@@ -9,15 +9,17 @@ import cs271.raft.server.Server;
 import cs271.raft.server.State;
 import cs271.raft.util.Configuration;
 import cs271.raft.workthread.follower.FollowerWorker;
+import cs271.raft.workthread.follower.TimeOutManager;
 public class Follower extends Server {
   private FollowerWorker fromLeader;
   private String leaderIp;
   private List<FollowerWorker> workers;
+  private TimeOutManager manager;
   private ServerSocket ss;
   public Follower(){
     
   }
-  public Follower(String ip) {
+  public Follower(String ip) throws Exception {
     super(State.FOLLOWER, ip);
     workers = new ArrayList<FollowerWorker>();
   }
@@ -26,14 +28,17 @@ public class Follower extends Server {
     workers = new ArrayList<FollowerWorker>();
   }
   public void start() {
+    System.out.println("--------------------------------------------------------------------------------------");
     System.out.println("Starting as a follower");
     setAlive(true);
+    manager = new TimeOutManager(this);
+    new Thread(manager).start();
     try {
       ss = new ServerSocket(Configuration.getPORT());
-      System.out.println("System listening:" + ss);
+      System.out.println("Follower listening:" + ss);
       while(true) {
         Socket incoming = ss.accept();
-        System.out.println("System connecting and accepted:" + incoming);
+        System.out.println("Follower connecting and accepted:" + incoming);
         /* creates a new thread to due with this connection, continues accepting other socket */
         FollowerWorker worker = new FollowerWorker(incoming, this);
         new Thread(worker).start();
@@ -50,6 +55,7 @@ public class Follower extends Server {
     } catch (Exception e) {
       e.printStackTrace();
     } 
+    manager.stop();
     for (int i = 0; i < workers.size(); i++) {
       workers.get(i).stop();
     }
@@ -73,5 +79,8 @@ public class Follower extends Server {
   }
   public List<FollowerWorker> getWorkers() {
     return this.workers;
+  }
+  public TimeOutManager getManager() {
+    return manager;
   }
 }

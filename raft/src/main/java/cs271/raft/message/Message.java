@@ -1,14 +1,8 @@
 package cs271.raft.message;
 
 import java.io.Serializable;
+import cs271.raft.message.Message;
 public class Message implements Serializable {
-  public enum MessageType {
-    APPENDENTRY,
-    REQUESTVOTE,
-    RPCREPLY,
-    CLIENTREQUEST,
-    TOCLIENT;
-  }
   private MessageType type;
   public Message() {
 	  

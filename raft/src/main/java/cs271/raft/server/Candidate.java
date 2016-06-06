@@ -29,7 +29,7 @@ public class Candidate extends Server {
     
   }  
   
-  public Candidate(String ip) {
+  public Candidate(String ip) throws Exception {
     super(State.CANDIDATE, ip);
     init();
   }
@@ -46,15 +46,15 @@ public class Candidate extends Server {
     handlers = new ArrayList<IncomingRequestHandler>();
     
     /* set all servers' agreedTerm to  -1 */
-    for (int i = 0; i < Configuration.getIps().size(); i++) {
-      String ip = Configuration.getIps().get(i);
+    for (int i = 0; i < conf.getIps().size(); i++) {
+      String ip = conf.getIps().get(i);
       if (this.ip.equals(ip)) continue;
       agreedTerm.put(ip, -1);
       unconnected.add(ip);
     }
-    if (Configuration.isInChange()) {
-      for (int i = 0; i < Configuration.getNewIps().size(); i++) {
-        String ip = Configuration.getNewIps().get(i);
+    if (conf.isInChange()) {
+      for (int i = 0; i < conf.getNewIps().size(); i++) {
+        String ip = conf.getNewIps().get(i);
         if (this.ip.equals(ip)) continue;
         if (!agreedTerm.containsKey(ip)) {
           agreedTerm.put(ip, -1);
@@ -64,6 +64,7 @@ public class Candidate extends Server {
     }
   }
   public void start() {
+    System.out.println("--------------------------------------------------------------------------------------");
     System.out.println("Starting as a candidate");
     setAlive(true);
     manager = new RequestVoteManager(this);
@@ -71,10 +72,10 @@ public class Candidate extends Server {
     
     try {
       ss = new ServerSocket(Configuration.getPORT());
-      System.out.println("System listening:" + ss);
+      System.out.println("Candidate listening:" + ss);
       while(true) {
         Socket incoming = ss.accept();
-        System.out.println("System connecting and accepted:" + incoming);
+        System.out.println("Candidate connecting and accepted:" + incoming);
         /* creates a new thread to due with this connection, continues accepting other socket */
         IncomingRequestHandler handler= new IncomingRequestHandler(incoming, this);
         new Thread(handler).start();

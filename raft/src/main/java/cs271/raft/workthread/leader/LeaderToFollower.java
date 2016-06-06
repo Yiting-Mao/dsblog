@@ -13,10 +13,9 @@ import cs271.raft.util.TimeOut;
 import cs271.raft.server.Leader;
 import cs271.raft.message.AppendEntryRpc;
 import cs271.raft.message.Message;
-import cs271.raft.message.Message.MessageType;
+import cs271.raft.message.MessageType;
 import cs271.raft.message.RpcReply;
 import cs271.raft.storage.Log;
-import cs271.raft.util.Configuration;
 
 /* This is for leader to send append entry/ heartbeat and due with the replies */
 public class LeaderToFollower implements Runnable{
@@ -68,19 +67,18 @@ public class LeaderToFollower implements Runnable{
   }
 
   public void run(){
-    System.out.println("Starting LeaderToFollower");   
+    System.out.println("Talking to follower: " + ip);   
     while(alive) {
       boolean sent = false;
       
       /* has something to send*/
       if (!workList.isEmpty()) {
-        System.out.println("Sending AppendEntry");
         int index = workList.get(0);
         int matchIndex = leader.getSingleMatch(ip);
         
         /* leader thinks the follower haven't got this entry before */
         if (index > matchIndex) {
-          System.out.println("sending entry" + index);
+          System.out.println("sending entry" + index + " -> " + ip);
           Log log = new Log(leader.getLog().getEntries(index));
           try {
             sendAppendEntry(index, log); //IOException  
@@ -97,7 +95,6 @@ public class LeaderToFollower implements Runnable{
         
         /* have nothing specific to send but reach a timeout */
       } else if (timeOut.isTimeOut()) {
-        System.out.println("Sending Heartbeat");
         try {
           sendAppendEntry(leader.getLog().getLastIndex(), null);  //IOException  
         } catch (IOException e) {
@@ -146,7 +143,7 @@ public class LeaderToFollower implements Runnable{
       e.printStackTrace();
       System.out.println("Something wrong when trying to close the socket");
     }
-    System.out.println("LeaderToFollower Terminates");
+    System.out.println("LeaderToFollower with " + ip + " Terminates");
   }
 
   public void stop() {
