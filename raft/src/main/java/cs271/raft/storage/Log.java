@@ -66,7 +66,7 @@ public class Log implements Serializable{
     try {
       return entries.get(index);
     } catch (IndexOutOfBoundsException e) {
-      System.out.println("Log index out of bound");
+      //System.out.println("Log index out of bound");
       return null;
     }
     

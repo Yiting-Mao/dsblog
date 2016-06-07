@@ -110,10 +110,10 @@ public class Leader extends Server {
   
   public void updateCommit() {    
     int mid = Majority.getValue(matchIndex, conf, ip);
-    System.out.println("Mid: " + mid + "CommitIndex" + commitIndex);
+    //System.out.println("Mid: " + mid + "CommitIndex" + commitIndex);
     if (mid > commitIndex) {
       commit(mid);
-      System.out.println("commitIndex:" + commitIndex);
+     // System.out.println("commitIndex:" + commitIndex);
     }
   } 
   public void stop() {
@@ -140,7 +140,7 @@ public class Leader extends Server {
     } catch (Exception e) {
       System.out.println("Leader Reconfigure Sleep Interrupted");
     }
-    System.out.println(handler.getStage());
+    //System.out.println(handler.getStage());
     if (handler.getStage() >= 1) { //considers true when old and new has committed
       return true;
     } else {
@@ -189,7 +189,10 @@ public class Leader extends Server {
         }    
       }
     }
-    
+    System.out.println("unconnected ips");
+    for (int i = 0; i< unconnected.size(); i++) {
+      System.out.print(unconnected.get(i));
+    }
   }
   public void turnToFollower() {
     stop();

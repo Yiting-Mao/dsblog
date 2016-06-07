@@ -129,7 +129,7 @@ public class LeaderToFollower implements Runnable{
         } catch (ClassNotFoundException e) {
           e.printStackTrace();
         } catch (IOException e) {
-          e.printStackTrace();
+          //e.printStackTrace();
           System.out.println("Can't get reply, trying reconnect");
           reconnect();
           break;
@@ -145,6 +145,7 @@ public class LeaderToFollower implements Runnable{
       e.printStackTrace();
       System.out.println("Something wrong when trying to close the socket");
     }
+    leader.removeToFollower(ip);
     System.out.println("LeaderToFollower with " + ip + " Terminates");
   }
 

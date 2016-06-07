@@ -89,7 +89,7 @@ public class Server {
       if(entry == null) System.out.println("entry null");
       this.getBlog().addEntry(entry);
     }
-    System.out.println("CommitIndex:" + commitIndex + "newIndex" + newIndex);
+    //System.out.println("CommitIndex:" + commitIndex + "newIndex" + newIndex);
     commitIndex = newIndex;
     System.out.println("Commit Index " + commitIndex);
   }

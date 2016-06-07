@@ -30,7 +30,6 @@ public class Client {
   private BufferedReader bin;
   private String leaderIp;
   private List<String> aliveServers;
-  private List<String> deadServers;
   private Configuration conf;
   private String name;
   public Client() throws IOException {
@@ -39,16 +38,15 @@ public class Client {
   }
   private void init() throws IOException {   
     aliveServers = new ArrayList<String>();
-    deadServers = new ArrayList<String>();
-    conf = new Configuration("");
+    conf = new Configuration("1 2 3 4 5");
     conf.print();
     for (int i = 0; i < conf.getIps().size(); i++) {
       String ip = conf.getIps().get(i);
       aliveServers.add(ip);
     }
-    randomLeader();
+    //randomLeader();
     bin = new BufferedReader(new InputStreamReader(System.in)); 
-    System.out.println(leaderIp);
+    //System.out.println(leaderIp);
   }
   
   private void randomLeader() {
@@ -63,22 +61,21 @@ public class Client {
       if (in != null) in.close();     
       if (socket != null) socket.close();
     } catch (Exception e) {
-      System.out.println("Abnormal Close");
+      System.out.println("Connection Broken");
     }
-    try {      
+    try {   
+      System.out.println("Connecting " + leaderIp);   
       socket = new Socket(leaderIp, Configuration.getPORT());   
       out = new ObjectOutputStream(socket.getOutputStream());
       in = new ObjectInputStream(socket.getInputStream()); 
-      if (deadServers.contains(leaderIp)) {
-        deadServers.remove(leaderIp);
+      if (!aliveServers.contains(leaderIp)) {
         aliveServers.add(leaderIp);
       }
     } catch (Exception e) {
       System.out.println("can't connect");
-      deadServers.add(leaderIp);
       aliveServers.remove(leaderIp);
-      if (aliveServers.size() > deadServers.size()) {
-        randomLeader();
+      if (aliveServers.size() > 0) {
+        leaderIp = aliveServers.get(0);
         connect();
       } else {
         System.out.println("System isn't working, press 'q' to quit and try later");
@@ -131,9 +128,6 @@ public class Client {
       System.out.println("request sent");
       ToClient reply = (ToClient)in.readObject();
       System.out.println(reply.isSuccess());
-      /**
-        * TODO: update client's configuration
-        */
       if(!reply.isSuccess()) {
         leaderIp = reply.getInfo();
         connect();
@@ -145,12 +139,14 @@ public class Client {
     }
       
   }
-  public void interact() {
-   
-    System.out.println("Input your name...");
-    /* get inputs from user */     
+  public void interact() {       
     try {               
-      name = bin.readLine(); //IOException
+      System.out.println("Input your name...");
+      /* get inputs from user */     
+      name = bin.readLine(); //IOException     
+      System.out.println("Choose your server number(0 to 2)...");
+      int id = Integer.parseInt(bin.readLine());
+      leaderIp = Configuration.getIds().get(id);
       connect();  //IOException 
     } catch (Exception e) {
       

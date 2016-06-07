@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+import cs271.raft.storage.PersistentStorage;
 
 public class Configuration implements Serializable{
   private static int PORT = 6669;
@@ -49,6 +50,7 @@ public class Configuration implements Serializable{
     System.out.println(Ips);
     inChange = false;
     index = -1;
+    PersistentStorage.setConfiguration(this);
   }
   
   public void changeConfiguration (String newIds, int index) {
@@ -61,7 +63,8 @@ public class Configuration implements Serializable{
       }
       inChange = true;
     }   
-    this.index = index;   
+    this.index = index;  
+    PersistentStorage.setConfiguration(this); 
   }
   
   public void commitConfiguration (int index) {
@@ -71,6 +74,7 @@ public class Configuration implements Serializable{
       inChange = false;
       this.index = index;
     }
+    PersistentStorage.setConfiguration(this);
   }
   
   public void print() {

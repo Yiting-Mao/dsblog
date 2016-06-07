@@ -12,6 +12,7 @@ import cs271.raft.Raft;
 import cs271.raft.server.Server;
 import cs271.raft.server.State;
 import cs271.raft.util.Configuration;
+import cs271.raft.util.Majority;
 import cs271.raft.workthread.candidate.IncomingRequestHandler;
 import cs271.raft.workthread.candidate.RequestVoteManager;
 import cs271.raft.workthread.candidate.RequestVoteSender;
@@ -116,12 +117,7 @@ public class Candidate extends Server {
     agreedTerm.put(ip, term);
   }
   public boolean hasMajority() {
-    List<Integer> tmp = new ArrayList<Integer>();
-    for (Map.Entry<String, Integer> entry : agreedTerm.entrySet()) {
-      tmp.add(entry.getValue()); 
-    }
-    Collections.sort(tmp);
-    int mid = tmp.get(tmp.size() / 2);
+    int mid = Majority.getValue(agreedTerm, conf, ip);
     if (mid == this.getCurrentTerm()) {
       return true;
     } else {
