@@ -47,10 +47,11 @@ public class Configuration implements Serializable{
         Ips.add(Ids.get(id));
       }
     }    
-    System.out.println(Ips);
+    //System.out.println(Ips);
     inChange = false;
     index = -1;
     PersistentStorage.setConfiguration(this);
+    print();
   }
   
   public void changeConfiguration (String newIds, int index) {
@@ -65,6 +66,7 @@ public class Configuration implements Serializable{
     }   
     this.index = index;  
     PersistentStorage.setConfiguration(this); 
+    print();
   }
   
   public void commitConfiguration (int index) {
@@ -75,19 +77,15 @@ public class Configuration implements Serializable{
       this.index = index;
     }
     PersistentStorage.setConfiguration(this);
+    print();
   }
   
   public void print() {
-    for (int i = 0; i < Ips.size(); i++) {
-      System.out.print(Ips.get(i) + ", ");
-    }
-    System.out.println("");
+    System.out.println("Configuration:");
+    System.out.println(Ips);
     System.out.println("Inchange: " + inChange);
     if (inChange) {
-      for (int i = 0; i < newIps.size(); i++) {
-        System.out.print(newIps.get(i) + ", ");
-      }
-      System.out.println("");
+      System.out.println(newIps));
     }
     
     

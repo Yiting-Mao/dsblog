@@ -66,7 +66,7 @@ public class ReconfigurationHandler implements Runnable {
     }
   }
   public void run() {
-    System.out.println("Starting Reconfiguration Handler");
+    System.out.println("Start: Reconfiguration Handler");
     if (stage == 0 && newIds != null) {
       procedure1();
     }
@@ -82,6 +82,7 @@ public class ReconfigurationHandler implements Runnable {
       }
       procedure2();
     }
+    System.out.println("End: Reconfiguration Handler");
   }
   
   public int getStage() {

@@ -39,7 +39,7 @@ public class Client {
   private void init() throws IOException {   
     aliveServers = new ArrayList<String>();
     conf = new Configuration("1 2 3 4 5");
-    conf.print();
+    //conf.print();
     for (int i = 0; i < conf.getIps().size(); i++) {
       String ip = conf.getIps().get(i);
       aliveServers.add(ip);
@@ -55,7 +55,7 @@ public class Client {
     leaderIp = aliveServers.get(num);
   }
   
-  private void connect() {  
+  private boolean connect() {  
     try {
       if (out != null) out.close();      
       if (in != null) in.close();     
@@ -64,6 +64,9 @@ public class Client {
       System.out.println("Connection Broken");
     }
     try {   
+      if (leaderIp == null) {
+        randomLeader();
+      }
       System.out.println("Connecting " + leaderIp);   
       socket = new Socket(leaderIp, Configuration.getPORT());   
       out = new ObjectOutputStream(socket.getOutputStream());
@@ -71,14 +74,16 @@ public class Client {
       if (!aliveServers.contains(leaderIp)) {
         aliveServers.add(leaderIp);
       }
+      return true;
     } catch (Exception e) {
       System.out.println("can't connect");
       aliveServers.remove(leaderIp);
       if (aliveServers.size() > 0) {
-        leaderIp = aliveServers.get(0);
-        connect();
+        randomLeader();
+        return connect();
       } else {
         System.out.println("System isn't working, press 'q' to quit and try later");
+        return false;
       }     
     }
   }
@@ -91,13 +96,16 @@ public class Client {
       ToClient reply = (ToClient)in.readObject();
       System.out.println(reply.isSuccess());
       if(!reply.isSuccess()) {
-        leaderIp = reply.getInfo();
-        connect();
-        post(post);
+        if (reply.getInfo() == null) {
+          aliveServers.remove(leaderIp);
+          randomLeader();
+        } else {
+          leaderIp = reply.getInfo();
+        }      
+        if (connect()) post(post);
       }       
     } catch (Exception e) {
-      connect();
-      post(post);
+      if(connect())post(post);     
     }
       
   } 
@@ -111,13 +119,16 @@ public class Client {
         Blog blog = (Blog)in.readObject();
         blog.print();
       } else {
-        leaderIp = reply.getInfo();
-        connect();
-        lookUp();
+        if (reply.getInfo() == null) {
+          aliveServers.remove(leaderIp);
+          randomLeader();
+        } else {
+          leaderIp = reply.getInfo();
+        }   
+        if (connect()) lookUp();
       } 
     } catch (Exception e) {
-      connect();
-      lookUp();
+      if (connect()) lookUp();
     }      
   } 
   
@@ -129,13 +140,16 @@ public class Client {
       ToClient reply = (ToClient)in.readObject();
       System.out.println(reply.isSuccess());
       if(!reply.isSuccess()) {
-        leaderIp = reply.getInfo();
-        connect();
-        reconfigure(newIds);
+        if (reply.getInfo() == null) {
+          aliveServers.remove(leaderIp);
+          randomLeader();
+        } else {
+          leaderIp = reply.getInfo();
+        }   
+        if (connect()) reconfigure(newIds);       
       }       
     } catch (Exception e) {
-      connect();
-      reconfigure(newIds);
+      if (connect()) reconfigure(newIds);       
     }
       
   }
@@ -144,7 +158,7 @@ public class Client {
       System.out.println("Input your name...");
       /* get inputs from user */     
       name = bin.readLine(); //IOException     
-      System.out.println("Choose your server number(0 to 2)...");
+      System.out.println("Choose your server number(1 to 5)...");
       int id = Integer.parseInt(bin.readLine());
       leaderIp = Configuration.getIds().get(id);
       connect();  //IOException 

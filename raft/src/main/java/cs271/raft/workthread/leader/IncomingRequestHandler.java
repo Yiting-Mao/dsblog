@@ -94,9 +94,14 @@ public class IncomingRequestHandler implements Runnable {
   }
 
   public void run() {
+    System.out.println("START: Leader IncomingRequestHandler");
     try {
       while(alive) {
         Message message = (Message) in.readObject();
+        /* when leader stops, it will set alive to false, however, this thread will be waiting to read,
+         * The first message from client after leader stops will still be received
+         */
+        if (!alive) break;
         if (message.getType() == MessageType.CLIENTREQUEST) {
           handleCR((ClientRequest)message);
         } else if (message.getType() == MessageType.REQUESTVOTE) {
@@ -122,7 +127,7 @@ public class IncomingRequestHandler implements Runnable {
      e2.printStackTrace();
     } 
     leader.getHandlers().remove(this);
-    System.out.println("Leader IncomingRequestHandler Terminates");
+    System.out.println("END: Leader IncomingRequestHandler");
   }
 
   public Socket getSocket() {

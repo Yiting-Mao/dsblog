@@ -119,7 +119,7 @@ public class PersistentStorage {
       out.writeObject(conf);
       out.close();
       outstream.close();
-      System.out.println("configuration written");
+     // System.out.println("configuration written");
     } catch (Exception e) {
       e.printStackTrace();
     } 

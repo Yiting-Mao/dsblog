@@ -122,11 +122,11 @@ public class Leader extends Server {
       ss.close();
     } catch (Exception e) {
       e.printStackTrace();
-    } 
-    manager.stop();
+    }    
     for (int i = 0; i < handlers.size(); i++) {
       handlers.get(i).stop();
     }
+    manager.stop();
     for (Map.Entry<String, LeaderToFollower> entry : toFollowers.entrySet()) {
       entry.getValue().stop(); 
     }
