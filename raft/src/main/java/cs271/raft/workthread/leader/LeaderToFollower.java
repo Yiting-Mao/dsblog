@@ -61,7 +61,7 @@ public class LeaderToFollower implements Runnable{
   }
   
   private void reconnect() {
-    leader.getConnected().remove(ip);
+    //leader.getConnected().remove(ip);
     leader.removeToFollower(ip);
     leader.addUnconnected(ip);
   }
@@ -96,7 +96,8 @@ public class LeaderToFollower implements Runnable{
         /* have nothing specific to send but reach a timeout */
       } else if (timeOut.isTimeOut()) {
         try {
-          sendAppendEntry(leader.getLog().getLastIndex(), null);  //IOException  
+        
+          sendAppendEntry(leader.getLog().getLastIndex() + 1, null);  //IOException  
         } catch (IOException e) {
           System.out.println("Can't send AppendEntry");
           reconnect();
@@ -128,6 +129,7 @@ public class LeaderToFollower implements Runnable{
         } catch (ClassNotFoundException e) {
           e.printStackTrace();
         } catch (IOException e) {
+          e.printStackTrace();
           System.out.println("Can't get reply, trying reconnect");
           reconnect();
           break;

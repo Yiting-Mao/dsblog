@@ -41,12 +41,14 @@ public class Client {
     aliveServers = new ArrayList<String>();
     deadServers = new ArrayList<String>();
     conf = new Configuration("");
+    conf.print();
     for (int i = 0; i < conf.getIps().size(); i++) {
       String ip = conf.getIps().get(i);
       aliveServers.add(ip);
     }
     randomLeader();
     bin = new BufferedReader(new InputStreamReader(System.in)); 
+    System.out.println(leaderIp);
   }
   
   private void randomLeader() {
@@ -60,9 +62,8 @@ public class Client {
       if (out != null) out.close();      
       if (in != null) in.close();     
       if (socket != null) socket.close();
-      System.out.println("socket is clear");
     } catch (Exception e) {
-      System.out.println("Unnormal Close");
+      System.out.println("Abnormal Close");
     }
     try {      
       socket = new Socket(leaderIp, Configuration.getPORT());   

@@ -19,24 +19,27 @@ public class ConnectionManager implements Runnable {
   
   public void run() {
     /* when doing changes to this local unconnected, will the leader's field also change? */
-    List<String> unconnected = leader.getUnconnected();
-    Map<String, Socket> connected = leader.getConnected();
+   // Map<String, Socket> connected = leader.getConnected();
     while(alive) {
+      List<String> unconnected = leader.getUnconnected();
       if(!unconnected.isEmpty()) {
         for (int i = 0; i < unconnected.size(); i++) {
           String ip = unconnected.get(i);
+          //System.out.println("Connecting " + ip);
           try {          
             Socket socket = new Socket(ip, Configuration.getPORT());
-            connected.put(ip, socket);  
+           // connected.put(ip, socket);  
             unconnected.remove(i);
             i--; 
             LeaderToFollower toFollower = new LeaderToFollower(ip, socket, leader);
             new Thread(toFollower).start();
             leader.addToFollower(ip, toFollower);
+            System.out.println("Connected to " + ip);
           } catch (Exception e) {
-            System.out.println("Connect to " + ip + " failed");
+            //System.out.println("Connect to " + ip + " failed");
           } 
         }
+        leader.setUnconnected(unconnected);
       }
       try {
         Thread.sleep(1000);

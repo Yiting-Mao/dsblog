@@ -43,7 +43,8 @@ public class FollowerWorker implements Runnable {
     }
   }
   
-  private void acceptAE(AppendEntryRpc append) throws IOException {          
+  private void acceptAE(AppendEntryRpc append) throws IOException { 
+   // System.out.println("Accepting AE");         
     Log log = append.getLog();
     int prevIndex = append.getPrevLogIndex();
     if(log != null) {
@@ -60,6 +61,7 @@ public class FollowerWorker implements Runnable {
     }      
     int lastIndex = follower.getLog().getLastIndex();
     int leaderCommit = append.getLeaderCommit();
+   // System.out.println("LeaderCommit " + leaderCommit + "lastIndex " + lastIndex);
     if (leaderCommit > follower.getCommitIndex()) {
       int newIndex = leaderCommit > lastIndex ? lastIndex : leaderCommit;
       follower.commit(newIndex);
@@ -110,6 +112,7 @@ public class FollowerWorker implements Runnable {
     }
     /* send the reply */
     int prevIndex = append.getPrevLogIndex();
+    //System.out.println("append's prevIndex " + prevIndex);
     if (prevIndex >= 0) {
       LogEntry entry = follower.getLog().getEntry(prevIndex);
       if (entry != null && entry.getTerm() == append.getPrevLogTerm()) {

@@ -26,6 +26,7 @@ public class RequestVoteManager implements Runnable{
     timeOut = new TimeOut();
   }
   public void run() {
+    System.out.println("Starting RequestVoteManager");
     Map<String, Socket> connected = candidate.getConnected();
     Map<String, RequestVoteSender> senders = candidate.getSenders();
     List<String> unconnected = candidate.getUnconnected();

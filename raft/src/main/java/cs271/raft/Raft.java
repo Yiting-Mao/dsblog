@@ -73,7 +73,7 @@ public class Raft implements Runnable {
       client.interact();
       break;
     default:
-       System.out.println("usage: '<l> <ip>' to start a leader, '<f> <ip>' to start a follower, 'c' to start a client");     
+       System.out.println("usage: '<l>/<c>/<f> <id>' to start a leader/ candidate/ follower, 'u' to start a user");     
     }
   }
 }

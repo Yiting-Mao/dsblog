@@ -26,7 +26,7 @@ public class Leader extends Server {
   private Map<String, Integer> nextIndex; 
   private Map<String, Integer> matchIndex;
   private Map<String, LeaderToFollower> toFollowers;
-  private Map<String, Socket> connected;
+  //private Map<String, Socket> connected;
   private List<String> unconnected;
   private List<IncomingRequestHandler> handlers;
   private ConnectionManager manager;
@@ -48,7 +48,7 @@ public class Leader extends Server {
     nextIndex = new HashMap<String, Integer>();
     matchIndex = new HashMap<String, Integer>();
     toFollowers = new HashMap<String, LeaderToFollower>();
-    connected = new HashMap<String, Socket>();
+    //connected = new HashMap<String, Socket>();
     unconnected = new ArrayList<String>();
     handlers = new ArrayList<IncomingRequestHandler>();
     int lastIndex = this.getLog().size() - 1;
@@ -110,8 +110,10 @@ public class Leader extends Server {
   
   public void updateCommit() {    
     int mid = Majority.getValue(matchIndex, conf, ip);
+    System.out.println("Mid: " + mid + "CommitIndex" + commitIndex);
     if (mid > commitIndex) {
       commit(mid);
+      System.out.println("commitIndex:" + commitIndex);
     }
   } 
   public void stop() {
@@ -147,29 +149,47 @@ public class Leader extends Server {
   }
   
   public void updateFollowers() {
+    System.out.println("updating followers");
     for (Map.Entry<String, LeaderToFollower> entry : toFollowers.entrySet()) {
       if (!conf.contains(entry.getKey())) {
         entry.getValue().stop(); 
-      }    
-      unconnected = new ArrayList<String>();
-      List<String> Ips = conf.getIps();
-      for (int i = 0; i < Ips.size(); i++) {
-        if (this.ip.equals(Ips.get(i))) continue;
-        if (!toFollowers.containsKey(Ips.get(i))) {
-          unconnected.add(Ips.get(i));
-        }
+      }  
+    }      
+    unconnected = new ArrayList<String>();
+    
+    List<String> Ips = conf.getIps();
+    int lastIndex = this.getLog().size() - 1;
+    for (int i = 0; i < Ips.size(); i++) {
+      String ip = Ips.get(i);
+      if (this.ip.equals(ip)) continue;
+      if (!toFollowers.containsKey(ip)) {
+        unconnected.add(ip);
+      } 
+      if (!nextIndex.containsKey(ip)) {
+        nextIndex.put(ip, lastIndex + 1);
       }
-      if (conf.isInChange()) {
-        List<String> newIps = conf.getNewIps();
-        for (int i = 0; i < newIps.size(); i++) {
-          String ip = newIps.get(i);
-          if (this.ip.equals(ip)) continue;
-          if (!toFollowers.containsKey(ip) && !unconnected.contains(ip)) {
-            unconnected.add(ip);
-          }
+      if (!matchIndex.containsKey(ip)) {
+        matchIndex.put(ip, -1);
+      }        
+    }
+    
+    if (conf.isInChange()) {
+      List<String> newIps = conf.getNewIps();
+      for (int i = 0; i < newIps.size(); i++) {
+        String ip = newIps.get(i);
+        if (this.ip.equals(ip)) continue;
+        if (!toFollowers.containsKey(ip) && !unconnected.contains(ip)) {
+          unconnected.add(ip);
         }
+        if (!nextIndex.containsKey(ip)) {
+          nextIndex.put(ip, lastIndex + 1);
+        }
+        if (!matchIndex.containsKey(ip)) {
+          matchIndex.put(ip, -1);
+        }    
       }
     }
+    
   }
   public void turnToFollower() {
     stop();
@@ -198,13 +218,13 @@ public class Leader extends Server {
   public void addToFollower(String ip, LeaderToFollower toFollower) {
     toFollowers.put(ip, toFollower);
   }
-  public Map<String, Socket> getConnected() {
-    return connected;
-  }
-
-  public void setConnected(Map<String, Socket> connected) {
-    this.connected = connected;
-  }
+  // public Map<String, Socket> getConnected() {
+//     return connected;
+//   }
+//
+//   public void setConnected(Map<String, Socket> connected) {
+//     this.connected = connected;
+//   }
   
   public List<String> getUnconnected() {
     return unconnected;

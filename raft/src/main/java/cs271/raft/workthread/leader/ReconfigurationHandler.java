@@ -23,8 +23,7 @@ public class ReconfigurationHandler implements Runnable {
     this.newIds = newIds;
   }
   
-  private void procedure1() {
-    
+  private void procedure1() {   
     BlogEntry be = new BlogEntry("Reconfigure Stage One", newIds);
     LogEntry le = new LogEntry(be, leader.getCurrentTerm());
     int index = leader.getLog().addEntry(le);
@@ -38,7 +37,8 @@ public class ReconfigurationHandler implements Runnable {
        System.out.println(e);
     }
     if (leader.getCommitIndex() >= index) {
-      System.out.println("Log added");
+      System.out.println("Stage One Commited");
+      stage = 1;
     }
   }
   
@@ -56,7 +56,8 @@ public class ReconfigurationHandler implements Runnable {
        System.out.println(e);
     }
     if (leader.getCommitIndex() >= index) {
-      System.out.println("Log added");
+      System.out.println("Stage Two Commited");
+      stage = 2;
       if (leader.getConf().contains(leader.getIp())) {
         leader.updateFollowers();
       } else if (leader.isAlive()) {
@@ -68,7 +69,6 @@ public class ReconfigurationHandler implements Runnable {
     System.out.println("Starting Reconfiguration Handler");
     if (stage == 0 && newIds != null) {
       procedure1();
-      stage = 1;
     }
     //when a new leader starts with conf old and new, it init a reconfiguration with stage 1, but it is possible 
     //that old and new haven't be commited, if not, wait a while
@@ -81,7 +81,6 @@ public class ReconfigurationHandler implements Runnable {
         }
       }
       procedure2();
-      stage = 2;
     }
   }
   

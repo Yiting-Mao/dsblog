@@ -9,7 +9,7 @@ import java.util.HashMap;
 
 
 public class Configuration implements Serializable{
-  private static int PORT = 6667;
+  private static int PORT = 6669;
   
   private static Map<Integer, String> Ids;
   static {
@@ -73,6 +73,21 @@ public class Configuration implements Serializable{
     }
   }
   
+  public void print() {
+    for (int i = 0; i < Ips.size(); i++) {
+      System.out.print(Ips.get(i) + ", ");
+    }
+    System.out.println("");
+    System.out.println("Inchange: " + inChange);
+    if (inChange) {
+      for (int i = 0; i < newIps.size(); i++) {
+        System.out.print(newIps.get(i) + ", ");
+      }
+      System.out.println("");
+    }
+    
+    
+  }
   public int getIndex() {
     return index;
   }
