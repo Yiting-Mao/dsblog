@@ -73,6 +73,7 @@ public class Server {
       String input = bin.readLine();  
       conf = new Configuration(input);   
     } 
+    conf.print();
 	  blog = new Blog();
 	  commitIndex = -1;
 	  lastApplied = -1;

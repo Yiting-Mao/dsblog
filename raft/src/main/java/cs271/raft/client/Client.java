@@ -105,6 +105,8 @@ public class Client {
         if (connect()) post(post);
       }       
     } catch (Exception e) {
+      aliveServers.remove(leaderIp);
+      randomLeader();
       if(connect())post(post);     
     }
       
@@ -115,6 +117,7 @@ public class Client {
       ClientRequest request = new ClientRequest(MessageType.CLIENTREQUEST, name, 'l', null);
       out.writeObject(request);
       ToClient reply = (ToClient)in.readObject(); //ClassNotFoundException
+      System.out.println(reply.isSuccess());
       if(reply.isSuccess()) {
         Blog blog = (Blog)in.readObject();
         blog.print();
@@ -128,6 +131,8 @@ public class Client {
         if (connect()) lookUp();
       } 
     } catch (Exception e) {
+      aliveServers.remove(leaderIp);
+      randomLeader();
       if (connect()) lookUp();
     }      
   } 
@@ -149,6 +154,8 @@ public class Client {
         if (connect()) reconfigure(newIds);       
       }       
     } catch (Exception e) {
+      aliveServers.remove(leaderIp);
+      randomLeader();
       if (connect()) reconfigure(newIds);       
     }
       

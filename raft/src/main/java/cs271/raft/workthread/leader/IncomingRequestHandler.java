@@ -33,7 +33,7 @@ public class IncomingRequestHandler implements Runnable {
     this.leader = leader;
     alive = true;
     try {
-      this.socket.setSoTimeout (100000);
+      this.socket.setSoTimeout (1000000);
       in = new ObjectInputStream(socket.getInputStream());
       out = new ObjectOutputStream(socket.getOutputStream());
     } catch (IOException e) {
@@ -50,12 +50,22 @@ public class IncomingRequestHandler implements Runnable {
         int index = leader.getLog().addEntry(le);
         System.out.println("index:" + index + ", " +request.getUser() + " posted:" + request.getPost());
         leader.spreadWork(index);
-        try {
-           Thread.sleep(400);
-        } catch (Exception e) {
-           System.out.println(e);
-        }
-        if (leader.getCommitIndex() >= index) {
+        while (alive) {
+          try {
+             Thread.sleep(400);
+          } catch (Exception e) {
+             System.out.println(e);
+          }
+          if (leader.getCommitIndex() >= index) {
+            ToClient toClient = new ToClient(MessageType.TOCLIENT, true, null);
+            out.writeObject(toClient);
+            break;
+          }
+        } 
+        if (leader.getCommitIndex() < index) {
+          ToClient toClient = new ToClient(MessageType.TOCLIENT, false, null);
+          out.writeObject(toClient);
+        } else {
           ToClient toClient = new ToClient(MessageType.TOCLIENT, true, null);
           out.writeObject(toClient);
         }

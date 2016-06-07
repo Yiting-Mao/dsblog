@@ -135,17 +135,23 @@ public class Leader extends Server {
   public boolean reconfigure(String newIds) {
     ReconfigurationHandler handler = new ReconfigurationHandler(this, 0, newIds);
     new Thread(handler).start();
-    try {
-      Thread.sleep(800);
-    } catch (Exception e) {
-      System.out.println("Leader Reconfigure Sleep Interrupted");
+    while(alive) {
+      try {
+        Thread.sleep(800);
+      } catch (Exception e) {
+        System.out.println("Leader Reconfigure Sleep Interrupted");
+      }
+      //System.out.println(handler.getStage());
+      if (handler.getStage() >= 1) { //considers true when old and new has committed
+        return true;
+      } 
     }
-    //System.out.println(handler.getStage());
-    if (handler.getStage() >= 1) { //considers true when old and new has committed
-      return true;
-    } else {
+    if (handler.getStage() < 1) {
       return false;
-    }   
+    } else {
+      return true;
+    }
+    
   }
   
   public void updateFollowers() {

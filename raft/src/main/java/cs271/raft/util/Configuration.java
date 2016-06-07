@@ -51,7 +51,7 @@ public class Configuration implements Serializable{
     inChange = false;
     index = -1;
     PersistentStorage.setConfiguration(this);
-    print();
+    //print();
   }
   
   public void changeConfiguration (String newIds, int index) {
@@ -66,7 +66,7 @@ public class Configuration implements Serializable{
     }   
     this.index = index;  
     PersistentStorage.setConfiguration(this); 
-    print();
+    //print();
   }
   
   public void commitConfiguration (int index) {
@@ -85,7 +85,7 @@ public class Configuration implements Serializable{
     System.out.println(Ips);
     System.out.println("Inchange: " + inChange);
     if (inChange) {
-      System.out.println(newIps));
+      System.out.println(newIps);
     }
     
     

@@ -58,7 +58,8 @@ public class RequestVoteSender implements Runnable{
       out.close(); 
       socket.close();  
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
+      System.out.println("Connection Broken");
       candidate.getConnected().remove(ip);
       candidate.getUnconnected().add(ip);
     }  
