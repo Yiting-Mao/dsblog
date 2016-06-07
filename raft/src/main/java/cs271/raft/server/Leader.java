@@ -121,7 +121,8 @@ public class Leader extends Server {
     try {
       ss.close();
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
+      System.out.println("ServerSocket Abnormal Closure");
     }    
     for (int i = 0; i < handlers.size(); i++) {
       handlers.get(i).stop();

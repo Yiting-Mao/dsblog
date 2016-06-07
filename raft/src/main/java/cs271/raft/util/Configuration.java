@@ -10,7 +10,7 @@ import java.util.HashMap;
 import cs271.raft.storage.PersistentStorage;
 
 public class Configuration implements Serializable{
-  private static int PORT = 6669;
+  private static int PORT = 6600;
   
   private static Map<Integer, String> Ids;
   static {

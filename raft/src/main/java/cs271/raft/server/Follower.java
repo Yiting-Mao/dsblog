@@ -53,7 +53,8 @@ public class Follower extends Server {
     try {
       ss.close();
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
+      System.out.println("ServerSocket Abnormal Closure");
     } 
     manager.stop();
     for (int i = 0; i < workers.size(); i++) {

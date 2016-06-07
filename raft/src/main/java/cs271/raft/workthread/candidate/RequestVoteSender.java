@@ -28,7 +28,7 @@ public class RequestVoteSender implements Runnable{
       out = new ObjectOutputStream(socket.getOutputStream()); //IOException   
       in = new ObjectInputStream(socket.getInputStream()); //IOException
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
     }
      
   }

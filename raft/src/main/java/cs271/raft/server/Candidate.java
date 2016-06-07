@@ -130,7 +130,8 @@ public class Candidate extends Server {
     try {
       ss.close();
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
+      System.out.println("ServerSocket Abnormal Closure");
     }   
     manager.stop();
   }

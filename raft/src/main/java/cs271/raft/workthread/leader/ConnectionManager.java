@@ -44,7 +44,7 @@ public class ConnectionManager implements Runnable {
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {  
-        e.printStackTrace();
+        //e.printStackTrace();
         System.out.println("Sleep Interrupted");
       }
     }

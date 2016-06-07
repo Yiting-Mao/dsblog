@@ -39,7 +39,7 @@ public class FollowerWorker implements Runnable {
       out = new ObjectOutputStream(socket.getOutputStream());
       alive = true;
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
     }
   }
   
@@ -187,7 +187,7 @@ public class FollowerWorker implements Runnable {
       in.close();
       socket.close();     
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
     }
     follower.getWorkers().remove(this);
     System.out.println("FollowerWorker Terminates");

@@ -32,7 +32,8 @@ public class PersistentStorage {
       term = Integer.parseInt(in.readLine());
       in.close();
     } catch (Exception e) {      
-      e.printStackTrace();
+      //e.printStackTrace();
+      System.out.println("Didn't get Persistent Term");
     } 
     return term;
   }
@@ -44,7 +45,8 @@ public class PersistentStorage {
       out.print(term);   
       out.close();
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
+      System.out.println("Wrong when writing Persistent Term");
     } 
   }
   
@@ -55,7 +57,8 @@ public class PersistentStorage {
       voted = in.readLine();
       in.close();
     } catch (Exception e) {      
-      e.printStackTrace();
+      //e.printStackTrace();
+      System.out.println("Didn't get Persistent VotedFor");
     }  
     return voted;
   }
@@ -67,7 +70,8 @@ public class PersistentStorage {
       out.print(voted);
       out.close();
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
+       System.out.println("Wrong when writing Persistent VotedFor");
     }    
   }
   
@@ -94,7 +98,8 @@ public class PersistentStorage {
       outstream.close();
      // System.out.println("log written");
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
+      System.out.println("Wrong when writing Persistent Log");
     }   
   }
   
@@ -121,7 +126,8 @@ public class PersistentStorage {
       outstream.close();
      // System.out.println("configuration written");
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
+      System.out.println("Wrong when writing Persistent Conf");
     } 
   }
  }

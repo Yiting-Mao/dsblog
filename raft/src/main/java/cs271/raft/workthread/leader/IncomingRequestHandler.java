@@ -37,7 +37,7 @@ public class IncomingRequestHandler implements Runnable {
       in = new ObjectInputStream(socket.getInputStream());
       out = new ObjectOutputStream(socket.getOutputStream());
     } catch (IOException e) {
-      e.printStackTrace();
+      //e.printStackTrace();
       alive = false;
     }
   }
@@ -126,7 +126,8 @@ public class IncomingRequestHandler implements Runnable {
     } catch (SocketTimeoutException e) {
       System.out.println("Time Out");          
     } catch (Exception e) {
-       e.printStackTrace();
+       //e.printStackTrace();
+       System.out.println("Sender closes");
     } 
     
     try {
@@ -134,7 +135,7 @@ public class IncomingRequestHandler implements Runnable {
       out.close();
       socket.close();
     } catch (IOException e2) {
-     e2.printStackTrace();
+     //e2.printStackTrace();
     } 
     leader.getHandlers().remove(this);
     System.out.println("END: Leader IncomingRequestHandler");

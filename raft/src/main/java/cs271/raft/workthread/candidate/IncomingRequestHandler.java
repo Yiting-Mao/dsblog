@@ -27,7 +27,8 @@ public class IncomingRequestHandler implements Runnable{
       in = new ObjectInputStream(socket.getInputStream());
       out = new ObjectOutputStream(socket.getOutputStream());
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
+      System.out.println("Wrong when creating Stream");
       alive = false;
     }
   } 
@@ -71,14 +72,15 @@ public class IncomingRequestHandler implements Runnable{
         }
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
+      System.out.println("The other end closes");
     }   
     try {
       out.close();
       in.close();
       socket.close();      
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
     }
     candidate.getRequestHandlers().remove(this);
     System.out.println("Candidate IncomingRequestHandler Terminates");
