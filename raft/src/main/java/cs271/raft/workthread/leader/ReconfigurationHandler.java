@@ -8,6 +8,7 @@ public class ReconfigurationHandler implements Runnable {
   //stage is first 0, when old-and-new is commited, stage becomes 1, when new commited, becomes 2
   private int stage; 
   private String newIds;
+  private boolean alive;
   public ReconfigurationHandler() {    
   }
   
@@ -23,6 +24,7 @@ public class ReconfigurationHandler implements Runnable {
     this.newIds = newIds;
   }
   
+  /* commiting configuration old and new */
   private void procedure1() {   
     BlogEntry be = new BlogEntry("Reconfigure Stage One", newIds);
     LogEntry le = new LogEntry(be, leader.getCurrentTerm());
@@ -31,17 +33,23 @@ public class ReconfigurationHandler implements Runnable {
     System.out.println("Reconfigure Stage One index:" + index);
     leader.updateFollowers();
     leader.spreadWork(index);
-    try {
-       Thread.sleep(400);
-    } catch (Exception e) {
-       System.out.println(e);
+    while(alive) {
+      try {
+         Thread.sleep(600);
+      } catch (Exception e) {
+         System.out.println(e);
+      }
+      if (leader.getCommitIndex() >= index) {
+        System.out.println("Stage One Commited");
+        stage = 1;
+        break;
+      }
+      
     }
-    if (leader.getCommitIndex() >= index) {
-      System.out.println("Stage One Commited");
-      stage = 1;
-    }
+    
   }
   
+  /* commiting configuration new */
   private void procedure2() {
     
     BlogEntry be = new BlogEntry("Reconfigure Stage Two", null);
@@ -50,23 +58,28 @@ public class ReconfigurationHandler implements Runnable {
     leader.getConf().commitConfiguration(index);
     System.out.println("Reconfigure Stage Two index:" + index);
     leader.spreadWork(index);
-    try {
-       Thread.sleep(400);
-    } catch (Exception e) {
-       System.out.println(e);
-    }
-    if (leader.getCommitIndex() >= index) {
-      System.out.println("Stage Two Commited");
-      stage = 2;
-      if (leader.getConf().contains(leader.getIp())) {
-        leader.updateFollowers();
-      } else if (leader.isAlive()) {
-        leader.turnToFollower();
+    while (alive) {
+      try {
+         Thread.sleep(400);
+      } catch (Exception e) {
+         System.out.println(e);
+      }
+      if (leader.getCommitIndex() >= index) {
+        System.out.println("Stage Two Commited");
+        stage = 2;
+        if (leader.getConf().contains(leader.getIp())) {
+          leader.updateFollowers();
+        } else if (leader.isAlive()) {
+          leader.turnToFollower();
+        }
+        break;
       }
     }
+    
   }
   public void run() {
     System.out.println("Start: Reconfiguration Handler");
+    alive = true;
     if (stage == 0 && newIds != null) {
       procedure1();
     }
@@ -87,5 +100,8 @@ public class ReconfigurationHandler implements Runnable {
   
   public int getStage() {
     return stage;
+  }
+  public void stop() {
+    alive = false;
   }
 }

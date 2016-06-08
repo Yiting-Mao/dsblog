@@ -29,7 +29,8 @@ public class Client {
   private ObjectOutputStream out;
   private BufferedReader bin;
   private String leaderIp;
-  private List<String> aliveServers;
+  /* servers that can be connected */
+  private List<String> aliveServers; 
   private Configuration conf;
   private String name;
   public Client() throws IOException {
@@ -131,6 +132,8 @@ public class Client {
         if (connect()) lookUp();
       } 
     } catch (Exception e) {
+      //e.printStackTrace();
+      System.out.println("LookUp got a Exception");
       aliveServers.remove(leaderIp);
       randomLeader();
       if (connect()) lookUp();

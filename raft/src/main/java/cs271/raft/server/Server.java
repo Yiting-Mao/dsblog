@@ -68,7 +68,7 @@ public class Server {
     }
     /* if conf hasn't stored in file, let admin to set init configurations */
     if (conf == null) {
-      System.out.println("input server ids(1-5) for init configuration, separate by space. Press enter to use default(1 2 3)");
+      System.out.println("input server ids(1-5) for init configuration, separated by space. Press enter to use default(1 2 3)");
       BufferedReader bin = new BufferedReader(new InputStreamReader(System.in));
       String input = bin.readLine();  
       conf = new Configuration(input);   
@@ -88,7 +88,10 @@ public class Server {
     for (int i = commitIndex + 1; i <= newIndex; i++) {
       BlogEntry entry = this.getLog().getEntry(i).getBlogEntry();
       if(entry == null) System.out.println("entry null");
-      this.getBlog().addEntry(entry);
+      if (!entry.getUser().equals("Reconfigure Stage One") && !entry.getUser().equals("Reconfigure Stage Two")) {
+        this.getBlog().addEntry(entry);
+      }
+      
     }
     //System.out.println("CommitIndex:" + commitIndex + "newIndex" + newIndex);
     commitIndex = newIndex;

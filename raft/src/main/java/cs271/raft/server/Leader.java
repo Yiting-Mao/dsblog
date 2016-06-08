@@ -30,6 +30,7 @@ public class Leader extends Server {
   private List<String> unconnected;
   private List<IncomingRequestHandler> handlers;
   private ConnectionManager manager;
+  private ReconfigurationHandler reco_handler;
   private ServerSocket ss;
   
   /* keep track of agreed ips for each log entry */
@@ -127,6 +128,9 @@ public class Leader extends Server {
     for (int i = 0; i < handlers.size(); i++) {
       handlers.get(i).stop();
     }
+    if (reco_handler != null) {
+      reco_handler.stop();
+    }
     manager.stop();
     for (Map.Entry<String, LeaderToFollower> entry : toFollowers.entrySet()) {
       entry.getValue().stop(); 
@@ -134,8 +138,8 @@ public class Leader extends Server {
   }
   
   public boolean reconfigure(String newIds) {
-    ReconfigurationHandler handler = new ReconfigurationHandler(this, 0, newIds);
-    new Thread(handler).start();
+    ReconfigurationHandler reco_handler = new ReconfigurationHandler(this, 0, newIds);
+    new Thread(reco_handler).start();
     while(alive) {
       try {
         Thread.sleep(800);
@@ -143,18 +147,21 @@ public class Leader extends Server {
         System.out.println("Leader Reconfigure Sleep Interrupted");
       }
       //System.out.println(handler.getStage());
-      if (handler.getStage() >= 1) { //considers true when old and new has committed
+      if (reco_handler.getStage() >= 1) { //considers true when old and new has committed
         return true;
       } 
     }
-    if (handler.getStage() < 1) {
+    if (reco_handler.getStage() < 1) {
+      reco_handler = null;
       return false;
     } else {
+      reco_handler = null;
       return true;
     }
     
   }
   
+  /* when changing configuration, update followers to contact */
   public void updateFollowers() {
     System.out.println("updating followers");
     for (Map.Entry<String, LeaderToFollower> entry : toFollowers.entrySet()) {

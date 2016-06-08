@@ -40,7 +40,8 @@ public class Candidate extends Server {
   }
   
   private void init() {
-    agreedTerm = new HashMap<String, Integer>();
+    /* the latest term followers voted */
+    agreedTerm = new HashMap<String, Integer>(); 
     connected = new HashMap<String, Socket>();
     senders = new HashMap<String, RequestVoteSender>();
     unconnected = new ArrayList<String>();

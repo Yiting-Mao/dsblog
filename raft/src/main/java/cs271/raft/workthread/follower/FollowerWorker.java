@@ -168,19 +168,6 @@ public class FollowerWorker implements Runnable {
       }
     } catch (Exception e) {
       System.out.println("IOException");
-      // int term = follower.getCurrentTerm();
-//       if (leaderIp != null) {
-//         TimeOut timeOut = new TimeOut();
-//         System.out.println("TimeOut: " + timeOut.getTimeOut());
-//         try {
-//           Thread.sleep(timeOut.getTimeOut());
-//         } catch (Exception e1) {
-//           e1.printStackTrace();
-//         }
-//       }
-      // if (term == follower.getCurrentTerm()) {
-//         follower.turnToCandidate();
-//       }
     }   
     try {
       out.close();

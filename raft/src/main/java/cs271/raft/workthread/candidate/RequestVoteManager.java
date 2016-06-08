@@ -11,7 +11,9 @@ import cs271.raft.util.Configuration;
 import cs271.raft.util.TimeOut;
 import cs271.raft.workthread.candidate.RequestVoteSender;
 
-
+/**
+ * manages timeOut, (periodicly) starts RequestVoteSender to send requestVote if haven't got majority 
+ */
 public class RequestVoteManager implements Runnable{
   private Candidate candidate;
   private TimeOut timeOut;

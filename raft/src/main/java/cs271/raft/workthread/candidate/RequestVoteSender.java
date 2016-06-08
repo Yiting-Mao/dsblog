@@ -10,6 +10,11 @@ import java.net.Socket;
 
 import cs271.raft.message.MessageType;
 
+/**
+ * sends requestVote and get reply from followers,
+ * if got the majority, turn to leader
+ * or found a higher term, turn to follower
+ */
 public class RequestVoteSender implements Runnable{
   private String ip;
   private Socket socket;

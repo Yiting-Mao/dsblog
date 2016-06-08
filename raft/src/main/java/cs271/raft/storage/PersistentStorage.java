@@ -12,6 +12,9 @@ import java.io.PrintWriter;
 import cs271.raft.storage.Log;
 import cs271.raft.util.Configuration;
 
+/**
+  * contains static functions to read and write persistent storage
+  */
 public class PersistentStorage {
   private static File log_f;
   private static File term_f;

@@ -24,6 +24,7 @@ public class Configuration implements Serializable{
   private List<String> Ips;
   private boolean inChange;
   private List<String> newIps;
+  /* the entry configuration is commited */
   private int index;
   
   public static Map<Integer, String> getIds() {

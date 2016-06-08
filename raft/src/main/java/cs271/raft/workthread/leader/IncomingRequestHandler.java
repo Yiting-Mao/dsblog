@@ -62,13 +62,13 @@ public class IncomingRequestHandler implements Runnable {
             break;
           }
         } 
-        if (leader.getCommitIndex() < index) {
-          ToClient toClient = new ToClient(MessageType.TOCLIENT, false, null);
-          out.writeObject(toClient);
-        } else {
-          ToClient toClient = new ToClient(MessageType.TOCLIENT, true, null);
-          out.writeObject(toClient);
-        }
+        // if (leader.getCommitIndex() < index) {
+//           ToClient toClient = new ToClient(MessageType.TOCLIENT, false, null);
+//           out.writeObject(toClient);
+//         } else {
+//           ToClient toClient = new ToClient(MessageType.TOCLIENT, true, null);
+//           out.writeObject(toClient);
+//         }
       }
       
     } else if (request.getOp() == 'l') {

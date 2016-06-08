@@ -12,6 +12,8 @@ import cs271.raft.message.RpcReply;
 import cs271.raft.message.ToClient;
 import cs271.raft.server.Candidate;
 
+/* For candidate to handle incoming request */
+
 public class IncomingRequestHandler implements Runnable{
   private Candidate candidate;
   private Socket socket;
@@ -52,7 +54,7 @@ public class IncomingRequestHandler implements Runnable{
             break;
           }
         } else if (type == MessageType.CLIENTREQUEST) { 
-          /* tell client the ip of leader */
+          /* let the client to contact later for leaderIp */
           System.out.println("Processing ClientRequest");
           Thread.sleep(300);
           ToClient reply = new ToClient(MessageType.TOCLIENT, false, candidate.getIp());

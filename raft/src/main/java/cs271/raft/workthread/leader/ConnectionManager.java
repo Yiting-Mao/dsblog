@@ -8,6 +8,9 @@ import cs271.raft.server.Leader;
 import cs271.raft.util.Configuration;
 import cs271.raft.workthread.leader.LeaderToFollower;
 
+/**
+ * periodically rebuild connections with unconnected servers, and starts talk to them
+ */
 public class ConnectionManager implements Runnable {
   private Leader leader;
   private boolean alive;
